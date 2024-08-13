@@ -80,3 +80,7 @@ func (s *SessionModel) ReadSession(userName string) (map[string]string, error) {
 
 	return res, nil
 }
+
+func (s *SessionModel) deleteSession(userName string) error {
+	return s.cache.Del(userName).Err()
+}

@@ -53,7 +53,6 @@ func (e *Env) SignUpHandler(c *gin.Context) {
 	})
 }
 
-// TODO Login
 func (e *Env) LoginHandler(c *gin.Context) {
 	var user UserRecord
 	err := c.ShouldBindBodyWithJSON(&user)
@@ -111,7 +110,6 @@ func (e *Env) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO Gen cookie + Store in redis
 	err = e.sessions.WriteSession(user.UserName, &user)
 	if err != nil {
 		log.Println(err.Error())
@@ -170,7 +168,14 @@ func (e *Env) EditProfileHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO Remove data from caching
+	err = e.sessions.deleteSession(user.UserName)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "updated successfully",
