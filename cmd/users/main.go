@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/duynguyen94/go-newfeeds/cmd/users/repo"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -185,12 +186,12 @@ func (e *Env) EditProfileHandler(c *gin.Context) {
 func main() {
 	// Setup shared connection,
 	// follow https://www.alexedwards.net/blog/organising-database-access
-	db, err := initDBConn()
+	db, err := repo.InitMySQLDBConn()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cacheClient, err := createRedisClient()
+	cacheClient, err := repo.CreateRedisClient()
 	if err != nil {
 		log.Fatal(err)
 	}

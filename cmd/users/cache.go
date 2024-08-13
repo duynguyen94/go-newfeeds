@@ -2,32 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/duynguyen94/go-newfeeds/cmd/users/repo"
 	"github.com/go-redis/redis"
 	"log"
-	"time"
 )
-
-const (
-	ttl       = time.Minute * 15
-	redisHost = "localhost:6379"
-	redisDb   = 0
-)
-
-// TODO Move this out as redis repo
-func createRedisClient() (*redis.Client, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr: redisHost,
-		DB:   redisDb,
-	})
-
-	_, err := client.Ping().Result()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
 
 type SessionModel struct {
 	cache *redis.Client
@@ -50,7 +28,7 @@ func (s *SessionModel) WriteSession(userName string, user *UserRecord) error {
 	value := s.createCookie(user)
 
 	bs, _ := json.Marshal(value)
-	err := s.cache.Set(key, bs, ttl).Err()
+	err := s.cache.Set(key, bs, repo.Ttl).Err()
 	if err != nil {
 		return err
 	}
