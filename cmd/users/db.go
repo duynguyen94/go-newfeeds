@@ -81,6 +81,28 @@ func GetUserRecord(db *sql.DB, id int) (UserRecord, error) {
 	return user, err
 }
 
+func GetUserRecordByUsername(db *sql.DB, username string) (UserRecord, error) {
+	stmtOut, err := db.Prepare("SELECT first_name, last_name, user_name, email, salt, hashed_password FROM user WHERE user_name = ?")
+	defer stmtOut.Close()
+
+	var user UserRecord
+
+	if err != nil {
+		return user, err
+	}
+
+	err = stmtOut.QueryRow(username).Scan(
+		&user.FirstName,
+		&user.LastName,
+		&user.UserName,
+		&user.Email,
+		&user.salt,
+		&user.hashedPass,
+	)
+
+	return user, err
+}
+
 func OverwriteUserRecord(db *sql.DB, user *UserRecord) error {
 	stmtIn, err := db.Prepare("UPDATE `user` SET first_name = ?, last_name = ?, user_name = ?, email = ?, salt = ?, hashed_password = ? WHERE id = ? ")
 	defer stmtIn.Close()
