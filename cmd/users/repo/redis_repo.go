@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// TODO Load from env
 const (
 	Ttl       = time.Minute * 15
 	redisHost = "localhost:6379"

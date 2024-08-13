@@ -7,22 +7,23 @@ import (
 	"time"
 )
 
+// TODO Load from env
 const (
-	dbhost = "127.0.0.1"
-	dbport = "3306"
-	dbuser = "mysql"
-	dbpass = "mysql"
-	dbname = "newsfeed"
+	defaultHost = "127.0.0.1"
+	defaultPort = "3306"
+	defaultUser = "mysql"
+	defaultPass = "mysql"
+	defaultName = "newsfeed"
 )
 
 func InitMySQLDBConn() (*sql.DB, error) {
 	// Specify connection properties.
 	cfg := mysql.Config{
-		User:   dbuser,
-		Passwd: dbpass,
+		User:   defaultUser,
+		Passwd: defaultPass,
 		Net:    "tcp",
-		Addr:   dbhost + ":" + dbport,
-		DBName: dbname,
+		Addr:   defaultHost + ":" + defaultPort,
+		DBName: defaultName,
 	}
 
 	// Get a driver-specific connector.
