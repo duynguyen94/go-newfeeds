@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// FIXME move this into other db repo
 const (
 	dbhost = "127.0.0.1"
 	dbport = "3306"
@@ -126,7 +127,7 @@ func (m UserDBModel) GetUserRecordByUsername(username string) (UserRecord, error
 	return user, err
 }
 
-func (m UserDBModel) OverwriteUserRecord(user *UserRecord) error {
+func (m UserDBModel) OverwriteUserRecord(id int, user *UserRecord) error {
 	stmtIn, err := m.DB.Prepare("UPDATE `user` SET first_name = ?, last_name = ?, user_name = ?, email = ?, salt = ?, hashed_password = ? WHERE id = ? ")
 	defer stmtIn.Close()
 
@@ -141,7 +142,7 @@ func (m UserDBModel) OverwriteUserRecord(user *UserRecord) error {
 		&user.Email,
 		&user.salt,
 		&user.hashedPass,
-		&user.Id,
+		id,
 	)
 
 	return nil

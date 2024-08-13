@@ -1,1 +1,7 @@
-package newsfeed
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("abc")
+}
