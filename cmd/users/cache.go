@@ -13,13 +13,7 @@ const (
 	redisDb   = 0
 )
 
-func userRecordtoCookie(user *UserRecord) map[string]string {
-	return map[string]string{
-		"username": user.UserName,
-		"password": user.Password,
-	}
-}
-
+// TODO Move this out as redis repo
 func createRedisClient() (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr: redisHost,
@@ -35,18 +29,37 @@ func createRedisClient() (*redis.Client, error) {
 	return client, nil
 }
 
-func SetJSONRedis(redisClient *redis.Client, key string, value *map[string]string) error {
+type SessionModel struct {
+	cache *redis.Client
+}
+
+func (s *SessionModel) createCookie(user *UserRecord) map[string]string {
+	return map[string]string{
+		"username": user.UserName,
+		"password": user.Password,
+	}
+}
+
+func (s *SessionModel) createKey(userName string) string {
+	return userName + "-session"
+}
+
+func (s *SessionModel) WriteSession(userName string, user *UserRecord) error {
 	// Errors should be handled here
+	key := s.createKey(userName)
+	value := s.createCookie(user)
+
 	bs, _ := json.Marshal(value)
-	err := redisClient.Set(key, bs, ttl).Err()
+	err := s.cache.Set(key, bs, ttl).Err()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetJSONRedis(redisClient *redis.Client, key string) (map[string]string, error) {
-	valueStr, err := redisClient.Get(key).Result()
+func (s *SessionModel) ReadSession(userName string) (map[string]string, error) {
+	key := s.createKey(userName)
+	valueStr, err := s.cache.Get(key).Result()
 
 	// Empty
 	if err == redis.Nil {
