@@ -62,7 +62,6 @@ func (e *Env) LoginHandler(c *gin.Context) {
 	})
 }
 
-// TODO Edit profile
 func (e *Env) EditProfileHandler(c *gin.Context) {
 	// Parse request body
 	var newUserRecord UserRecord
