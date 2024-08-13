@@ -6,17 +6,15 @@ services:
     container_name: mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: admin
-      MYSQL_DATABASE: admin
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: newsfeed
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./scripts/mysql-init:/docker-entrypoint-initdb.d
-    networks:
-      - app-network
+      - ./scripts/mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:alpine
@@ -24,8 +22,6 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-    networks:
-      - app-network
 
   minio:
     image: minio/minio
@@ -33,19 +29,14 @@ services:
     restart: unless-stopped
     environment:
       MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: admin
+      MINIO_ROOT_PASSWORD: 12345678
     ports:
       - "9000:9000"
       - "9001:9001"  # for MinIO console
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
-    networks:
-      - app-network
 
 volumes:
   mysql_data:
   minio_data:
-
-networks:
-  app-network:
