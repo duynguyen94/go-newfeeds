@@ -8,6 +8,7 @@ const DOBLayout = "2006-01-02"
 const saltSize = 16
 
 type UserRecord struct {
+	Id         int    `json:"id"`
 	FirstName  string `json:"firstName"`
 	LastName   string `json:"lastName"`
 	Email      string `json:"email"`
@@ -35,4 +36,8 @@ func (u *UserRecord) HashPassword() {
 
 	u.salt = string(salt[:])
 	u.hashedPass = hashedPass
+}
+
+func (u *UserRecord) IsMatchPassword(curPass string) bool {
+	return isPassMatch(u.hashedPass, curPass, []byte(u.salt))
 }
