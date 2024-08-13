@@ -4,8 +4,6 @@ import (
 	"database/sql"
 )
 
-// FIXME move this into other db repo
-
 type UserDBModel struct {
 	DB *sql.DB
 }
