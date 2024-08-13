@@ -10,8 +10,9 @@ services:
       MYSQL_DATABASE: newsfeed
       MYSQL_USER: mysql
       MYSQL_PASSWORD: mysql
+    network_mode: bridge
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./scripts/mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -20,6 +21,7 @@ services:
     image: redis:alpine
     container_name: redis
     restart: unless-stopped
+    network_mode: bridge
     ports:
       - "6379:6379"
 
@@ -27,6 +29,7 @@ services:
     image: minio/minio
     container_name: minio
     restart: unless-stopped
+    network_mode: bridge
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: 12345678

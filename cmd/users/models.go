@@ -16,7 +16,7 @@ type UserRecord struct {
 	Password   string `json:"password"`
 	DOB        string `json:"dob"`
 	DOBDate    time.Time
-	salt       string
+	salt       []byte
 	hashedPass string
 }
 
@@ -34,10 +34,10 @@ func (u *UserRecord) HashPassword() {
 	salt := genRandomSalt(saltSize)
 	hashedPass := hashPassword(u.Password, salt)
 
-	u.salt = string(salt[:])
+	u.salt = salt
 	u.hashedPass = hashedPass
 }
 
 func (u *UserRecord) IsMatchPassword(curPass string) bool {
-	return isPassMatch(u.hashedPass, curPass, []byte(u.salt))
+	return isPassMatch(u.hashedPass, curPass, u.salt)
 }

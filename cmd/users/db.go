@@ -2,12 +2,13 @@ package main
 
 import (
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
+	"log"
 	"time"
 )
 
 const (
-	dbhost = "localhost"
+	dbhost = "127.0.0.1"
 	dbport = "3306"
 	dbuser = "mysql"
 	dbpass = "mysql"
@@ -15,22 +16,43 @@ const (
 )
 
 func initDBConn() (*sql.DB, error) {
-	dataSource := dbuser + ":" + dbpass + "@" + dbhost + ":" + dbport + "/" + dbname
-	db, err := sql.Open("mysql", dataSource)
-
-	if err != nil {
-		return nil, err
+	// Specify connection properties.
+	cfg := mysql.Config{
+		User:   dbuser,
+		Passwd: dbpass,
+		Net:    "tcp",
+		Addr:   dbhost + ":" + dbport,
+		DBName: dbname,
 	}
+
+	// Get a driver-specific connector.
+	connector, err := mysql.NewConnector(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get a database handle.
+	db := sql.OpenDB(connector)
 
 	db.SetConnMaxLifetime(time.Minute * 3)
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 
+	err = db.Ping()
+
+	if err != nil {
+		return nil, err
+	}
+
 	return db, nil
 }
 
-func CreateNewUser(db *sql.DB, newUser UserRecord) (int64, error) {
-	stmtIn, err := db.Prepare("INSERT INTO user (first_name, last_name, user_name, email, salt, hashed_password) VALUES (?, ?, ?, ?, ?, ?, ?)")
+type UserDBModel struct {
+	DB *sql.DB
+}
+
+func (m UserDBModel) CreateNewUser(newUser UserRecord) (int64, error) {
+	stmtIn, err := m.DB.Prepare("INSERT INTO user (first_name, last_name, user_name, email, salt, hashed_password, dob) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	defer stmtIn.Close()
 
 	if err != nil {
@@ -44,6 +66,7 @@ func CreateNewUser(db *sql.DB, newUser UserRecord) (int64, error) {
 		&newUser.Email,
 		&newUser.salt,
 		&newUser.hashedPass,
+		&newUser.DOB,
 	)
 	if err != nil {
 		return -1, err
@@ -59,8 +82,8 @@ func CreateNewUser(db *sql.DB, newUser UserRecord) (int64, error) {
 
 }
 
-func GetUserRecord(db *sql.DB, id int) (UserRecord, error) {
-	stmtOut, err := db.Prepare("SELECT first_name, last_name, user_name, email, salt, hashed_password FROM user WHERE id = ?")
+func (m UserDBModel) GetUserRecord(id int) (UserRecord, error) {
+	stmtOut, err := m.DB.Prepare("SELECT first_name, last_name, user_name, email, salt, hashed_password FROM user WHERE id = ?")
 	defer stmtOut.Close()
 
 	var user UserRecord
@@ -81,8 +104,8 @@ func GetUserRecord(db *sql.DB, id int) (UserRecord, error) {
 	return user, err
 }
 
-func GetUserRecordByUsername(db *sql.DB, username string) (UserRecord, error) {
-	stmtOut, err := db.Prepare("SELECT first_name, last_name, user_name, email, salt, hashed_password FROM user WHERE user_name = ?")
+func (m UserDBModel) GetUserRecordByUsername(username string) (UserRecord, error) {
+	stmtOut, err := m.DB.Prepare("SELECT first_name, last_name, user_name, email, salt, hashed_password FROM user WHERE user_name = ?")
 	defer stmtOut.Close()
 
 	var user UserRecord
@@ -103,8 +126,8 @@ func GetUserRecordByUsername(db *sql.DB, username string) (UserRecord, error) {
 	return user, err
 }
 
-func OverwriteUserRecord(db *sql.DB, user *UserRecord) error {
-	stmtIn, err := db.Prepare("UPDATE `user` SET first_name = ?, last_name = ?, user_name = ?, email = ?, salt = ?, hashed_password = ? WHERE id = ? ")
+func (m UserDBModel) OverwriteUserRecord(user *UserRecord) error {
+	stmtIn, err := m.DB.Prepare("UPDATE `user` SET first_name = ?, last_name = ?, user_name = ?, email = ?, salt = ?, hashed_password = ? WHERE id = ? ")
 	defer stmtIn.Close()
 
 	if err != nil {

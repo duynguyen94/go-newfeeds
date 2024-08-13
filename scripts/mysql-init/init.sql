@@ -1,7 +1,7 @@
 CREATE TABLE `user` (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    hashed_password VARCHAR(255) NOT NULL,
-    salt VARCHAR(255) NOT NULL,
+    hashed_password VARBINARY(255) NOT NULL,
+    salt VARBINARY(255) NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     dob DATE NOT NULL,
