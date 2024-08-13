@@ -5,6 +5,27 @@ import (
 	"net/http"
 )
 
+// TODO Login
+func LoginHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+
+// TODO SignUp
+func SignUpHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+
+// TODO Edit profile
+func EditProfileHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+
 func main() {
 	r := gin.Default()
 	r.GET("/health-check", func(c *gin.Context) {
@@ -13,26 +34,12 @@ func main() {
 		})
 	})
 
-	// TODO Login
-	r.POST("/v1/users/login", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Need implementation",
-		})
-	})
-
-	// TODO SignUp
-	r.POST("/v1/users", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Need implementation",
-		})
-	})
-
-	// TODO Edit profile
-	r.PUT("/v1/users", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Need implementation",
-		})
-	})
+	r.Group("v1")
+	{
+		r.POST("/users/login", LoginHandler)
+		r.POST("/users", SignUpHandler)
+		r.PUT("/users", EditProfileHandler)
+	}
 
 	r.Run()
 }
