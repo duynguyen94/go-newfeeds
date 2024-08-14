@@ -10,8 +10,9 @@ import (
 )
 
 type Env struct {
-	users    UserDBModel
-	sessions SessionModel
+	users      UserDBModel
+	sessions   SessionModel
+	imageStore ImageStorageModel
 }
 
 // TODO Find the way to do it properly
@@ -311,6 +312,46 @@ func (e *Env) ViewFriendPostsHandler(c *gin.Context) {
 	})
 }
 
+func (e *Env) GetPost(c *gin.Context) {
+	// TODO
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+
+func (e *Env) CreatePost(c *gin.Context) {
+	// TODO
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+func (e *Env) EditPost(c *gin.Context) {
+	// TODO
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+func (e *Env) DeletePost(c *gin.Context) {
+	// TODO
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+
+func (e *Env) LikePost(c *gin.Context) {
+	// TODO
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+
+func (e *Env) CommentPost(c *gin.Context) {
+	// TODO
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need implementation",
+	})
+}
+
 func main() {
 	// Setup shared connection,
 	// follow https://www.alexedwards.net/blog/organising-database-access
@@ -337,15 +378,25 @@ func main() {
 	})
 
 	// TODO Organize API with group
+
+	// Users
 	r.POST("/v1/users/login", env.LoginHandler)
 	r.POST("/v1/users", env.SignUpHandler)
 	r.PUT("/v1/users/:id", env.EditProfileHandler)
 
-	// TODO Need implementation
+	// Friends
 	r.GET("/v1/friends/:id", env.GetFollowers)
 	r.POST("/v1/friends/:id", env.FollowHandler)
 	r.DELETE("/v1/friends/:id", env.UnFollowHandler)
 	r.GET("/v1/friends/:id/posts", env.ViewFriendPostsHandler)
+
+	// Posts
+	r.GET("/v1/posts/:post_id", env.GetPost)
+	r.POST("/v1/posts", env.CreatePost)
+	r.PUT("/v1/posts/:post_id", env.EditPost)
+	r.DELETE("/v1/posts/:post_id", env.DeletePost)
+	r.POST("/v1/posts/:post_id/comments", env.CommentPost)
+	r.POST("/v1/posts/:post_id/likes", env.LikePost)
 
 	r.Run()
 }
