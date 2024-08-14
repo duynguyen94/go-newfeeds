@@ -103,3 +103,63 @@ func (m UserDBModel) OverwriteUserRecord(id int, user *UserRecord) error {
 
 	return nil
 }
+
+func (m UserDBModel) FollowUser(id int, friendId int) error {
+	stmtIn, err := m.DB.Prepare("INSERT INTO `user_user` (fk_user_id, fk_follower_id) VALUES (?, ?)")
+	defer stmtIn.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmtIn.Exec(id, friendId)
+	return err
+}
+
+func (m UserDBModel) UnFollowUser(id int, friendId int) error {
+	stmtIn, err := m.DB.Prepare("DELETE FROM `user_user` WHERE fk_user_id=? AND fk_follower_id=?")
+	defer stmtIn.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmtIn.Exec(id, friendId)
+	return err
+}
+
+func (m UserDBModel) ViewFriendPost(friendId int) ([]PostRecord, error) {
+	var posts []PostRecord
+
+	stmtOut, err := m.DB.Prepare("SELECT id, content_text, content_image_path, created_at FROM `post` WHERE fk_user_id = ? AND visible = 1")
+	defer stmtOut.Close()
+
+	if err != nil {
+		return posts, err
+	}
+
+	rows, err := stmtOut.Query(friendId)
+	defer rows.Close()
+
+	if err != nil {
+		return posts, err
+	}
+
+	for rows.Next() {
+		var p PostRecord
+
+		err := rows.Scan(&p.Id, &p.ContentText, &p.ContentImagePath, &p.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, p)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return posts, err
+	}
+
+	return posts, nil
+}
