@@ -10,9 +10,10 @@ import (
 )
 
 type Env struct {
-	users      UserDBModel
-	sessions   SessionModel
-	imageStore ImageStorageModel
+	users    UserDBModel
+	posts    PostDBModel
+	sessions SessionModel
+	images   ImageStorageModel
 }
 
 // TODO Find the way to do it properly
@@ -320,11 +321,38 @@ func (e *Env) GetPost(c *gin.Context) {
 }
 
 func (e *Env) CreatePost(c *gin.Context) {
+	var post PostRecord
+	err := c.ShouldBindBodyWithJSON(&post)
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	postId, err := e.posts.CreatePost(&post)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"postId": postId,
+	})
+}
+
+func (e *Env) UploadImage(c *gin.Context) {
 	// TODO
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Need implementation",
 	})
 }
+
 func (e *Env) EditPost(c *gin.Context) {
 	// TODO
 	c.JSON(http.StatusOK, gin.H{
@@ -365,9 +393,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	minIOClient, err := repo.CreateMinioClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	env := &Env{
 		users:    UserDBModel{DB: db},
+		posts:    PostDBModel{DB: db},
 		sessions: SessionModel{cache: cacheClient},
+		images:   ImageStorageModel{client: minIOClient},
 	}
 
 	r := gin.Default()
@@ -393,6 +428,7 @@ func main() {
 	// Posts
 	r.GET("/v1/posts/:post_id", env.GetPost)
 	r.POST("/v1/posts", env.CreatePost)
+	r.POST("/v1/posts/:post_id/images", env.UploadImage)
 	r.PUT("/v1/posts/:post_id", env.EditPost)
 	r.DELETE("/v1/posts/:post_id", env.DeletePost)
 	r.POST("/v1/posts/:post_id/comments", env.CommentPost)

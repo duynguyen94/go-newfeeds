@@ -67,4 +67,5 @@ type PostRecord struct {
 	ContentText      string `json:"text"`
 	ContentImagePath string `json:"imagePath"`
 	CreatedAt        string `json:"createdAt"`
+	UserId           int    `json:"userId"`
 }
