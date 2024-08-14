@@ -128,6 +128,42 @@ func (m UserDBModel) UnFollowUser(id int, friendId int) error {
 	return err
 }
 
+func (m UserDBModel) ViewFollowers(id int) ([]UserRecord, error) {
+	var followers []UserRecord
+
+	stmtOut, err := m.DB.Prepare("SELECT first_name, last_name, email, user_name FROM `user_user` u_u LEFT JOIN `user` u ON(u_u.fk_follower_id = u.id) WHERE u_u.fk_user_id = ?")
+	defer stmtOut.Close()
+
+	if err != nil {
+		return followers, err
+	}
+
+	rows, err := stmtOut.Query(id)
+	defer rows.Close()
+
+	if err != nil {
+		return followers, err
+	}
+
+	for rows.Next() {
+		var u UserRecord
+
+		err := rows.Scan(&u.FirstName, &u.LastName, &u.Email, &u.UserName)
+		if err != nil {
+			return nil, err
+		}
+
+		followers = append(followers, u)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return followers, err
+	}
+
+	return followers, nil
+}
+
 func (m UserDBModel) ViewFriendPost(friendId int) ([]PostRecord, error) {
 	var posts []PostRecord
 

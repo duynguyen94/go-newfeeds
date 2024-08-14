@@ -259,6 +259,32 @@ func (e *Env) UnFollowHandler(c *gin.Context) {
 	})
 }
 
+func (e *Env) GetFollowers(c *gin.Context) {
+	// TODO Implement
+	userId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	followers, err := e.users.ViewFollowers(userId)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"followers": followers,
+	})
+}
+
 func (e *Env) ViewFriendPostsHandler(c *gin.Context) {
 	// TODO Implement
 	c.JSON(http.StatusOK, gin.H{
@@ -297,6 +323,7 @@ func main() {
 	r.PUT("/v1/users/:id", env.EditProfileHandler)
 
 	// TODO Need implementation
+	r.GET("/v1/friends/:id", env.GetFollowers)
 	r.POST("/v1/friends/:id", env.FollowHandler)
 	r.DELETE("/v1/friends/:id", env.UnFollowHandler)
 	r.GET("/v1/friends/:id/posts", env.ViewFriendPostsHandler)
