@@ -260,7 +260,6 @@ func (e *Env) UnFollowHandler(c *gin.Context) {
 }
 
 func (e *Env) GetFollowers(c *gin.Context) {
-	// TODO Implement
 	userId, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -286,9 +285,29 @@ func (e *Env) GetFollowers(c *gin.Context) {
 }
 
 func (e *Env) ViewFriendPostsHandler(c *gin.Context) {
-	// TODO Implement
+	userId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	posts, err := e.users.ViewFriendPost(userId)
+
+	// TODO For each posts, add gen pre-signed url for image
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Need ViewFriendPostsHandler implementation",
+		"posts": posts,
 	})
 }
 

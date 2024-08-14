@@ -164,17 +164,17 @@ func (m UserDBModel) ViewFollowers(id int) ([]UserRecord, error) {
 	return followers, nil
 }
 
-func (m UserDBModel) ViewFriendPost(friendId int) ([]PostRecord, error) {
+func (m UserDBModel) ViewFriendPost(id int) ([]PostRecord, error) {
 	var posts []PostRecord
 
-	stmtOut, err := m.DB.Prepare("SELECT id, content_text, content_image_path, created_at FROM `post` WHERE fk_user_id = ? AND visible = 1")
+	stmtOut, err := m.DB.Prepare("SELECT id, content_text, content_image_path, created_at FROM `user_user` u_u LEFT JOIN `post` p ON u_u.fk_follower_id = p.fk_user_id WHERE u_u.fk_user_id = ? AND visible = 1")
 	defer stmtOut.Close()
 
 	if err != nil {
 		return posts, err
 	}
 
-	rows, err := stmtOut.Query(friendId)
+	rows, err := stmtOut.Query(id)
 	defer rows.Close()
 
 	if err != nil {
