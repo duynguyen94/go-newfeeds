@@ -14,7 +14,11 @@ type Env struct {
 	sessions SessionModel
 }
 
-// SignUp
+// TODO Find the way to do it properly
+type friendPayload struct {
+	FriendId int `json:"friendId"`
+}
+
 func (e *Env) SignUpHandler(c *gin.Context) {
 	// Parse request body
 	var newUserRecord UserRecord
@@ -183,6 +187,85 @@ func (e *Env) EditProfileHandler(c *gin.Context) {
 	})
 }
 
+func (e *Env) FollowHandler(c *gin.Context) {
+	userId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	var requestBody friendPayload
+	err = c.ShouldBindBodyWithJSON(&requestBody)
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	err = e.users.FollowUser(userId, requestBody.FriendId)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Follow successfully",
+	})
+}
+
+func (e *Env) UnFollowHandler(c *gin.Context) {
+	userId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	var requestBody friendPayload
+	err = c.ShouldBindBodyWithJSON(&requestBody)
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	err = e.users.UnFollowUser(userId, requestBody.FriendId)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "UnFollow successfully",
+	})
+}
+
+func (e *Env) ViewFriendPostsHandler(c *gin.Context) {
+	// TODO Implement
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Need ViewFriendPostsHandler implementation",
+	})
+}
+
 func main() {
 	// Setup shared connection,
 	// follow https://www.alexedwards.net/blog/organising-database-access
@@ -208,9 +291,15 @@ func main() {
 		})
 	})
 
+	// TODO Organize API with group
 	r.POST("/v1/users/login", env.LoginHandler)
 	r.POST("/v1/users", env.SignUpHandler)
 	r.PUT("/v1/users/:id", env.EditProfileHandler)
+
+	// TODO Need implementation
+	r.POST("/v1/friends/:id", env.FollowHandler)
+	r.DELETE("/v1/friends/:id", env.UnFollowHandler)
+	r.GET("/v1/friends/:id/posts", env.ViewFriendPostsHandler)
 
 	r.Run()
 }
