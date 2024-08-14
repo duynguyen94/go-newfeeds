@@ -61,3 +61,10 @@ func (u *UserRecord) Merge(updateRecord *UserRecord) {
 	}
 
 }
+
+type PostRecord struct {
+	Id               int    `json:"id"`
+	ContentText      string `json:"text"`
+	ContentImagePath string `json:"imagePath"`
+	CreatedAt        string `json:"createdAt"`
+}
