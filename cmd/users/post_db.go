@@ -25,7 +25,22 @@ func (m *PostDBModel) CreatePost(p *PostRecord) (int64, error) {
 
 	newPostId, err := result.LastInsertId()
 	return newPostId, err
+}
 
+func (m *PostDBModel) UpdateImagePath(postId int, imagePath string) error {
+	stmtIn, err := m.DB.Prepare("UPDATE `post` SET content_image_path = ? WHERE id = ?")
+	defer stmtIn.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmtIn.Exec(
+		&imagePath,
+		&postId,
+	)
+
+	return err
 }
 
 func (m *PostDBModel) OverwritePost(postId int, p *PostRecord) error {

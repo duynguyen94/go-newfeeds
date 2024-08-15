@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	defaultEndpoint        = "localhost"
+	defaultEndpoint        = "localhost:9000"
 	defaultAccessKeyID     = "JxTyUZQukUVL3WIA7N05"
 	defaultSecretAccessKey = "8dyeIfKJzZuMEbjIoYWTU5zIC4Q4nELaJ6ZYbozd"
 	defaultUseSSL          = false

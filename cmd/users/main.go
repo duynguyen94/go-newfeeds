@@ -4,8 +4,10 @@ import (
 	"errors"
 	"github.com/duynguyen94/go-newfeeds/cmd/users/repo"
 	"github.com/gin-gonic/gin"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -13,7 +15,7 @@ type Env struct {
 	users    UserDBModel
 	posts    PostDBModel
 	sessions SessionModel
-	images   ImageStorageModel
+	images   ImagePostStorageModel
 }
 
 // TODO Find the way to do it properly
@@ -347,9 +349,91 @@ func (e *Env) CreatePost(c *gin.Context) {
 }
 
 func (e *Env) UploadImage(c *gin.Context) {
-	// TODO
+	// FIXME should merge 2 api create post into 1
+	postId, err := strconv.Atoi(c.Param("post_id"))
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	// single file
+	file, header, err := c.Request.FormFile("filename")
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	filename := header.Filename
+	//fSize := header.Size
+
+	out, err := os.Create("./tmp/" + filename)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	defer out.Close()
+	_, err = io.Copy(out, file)
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	fStat, err := out.Stat()
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	// Move file cursor to the start, follow https://www.reddit.com/r/golang/comments/wv7hky/i_cant_upload_the_file_to_the_minio_bucket/
+	_, err = out.Seek(0, io.SeekStart)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	log.Printf("Stats %d\n", fStat.Size())
+	imagePath, err := e.images.PutImage(out, postId, filename, fStat.Size())
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	err = e.posts.UpdateImagePath(postId, imagePath)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Need implementation",
+		"postId":    postId,
+		"imagePath": imagePath,
 	})
 }
 
@@ -402,10 +486,18 @@ func main() {
 		users:    UserDBModel{DB: db},
 		posts:    PostDBModel{DB: db},
 		sessions: SessionModel{cache: cacheClient},
-		images:   ImageStorageModel{client: minIOClient},
+		images:   ImagePostStorageModel{client: minIOClient, bucket: defaultBucket},
+	}
+
+	// Simple ping
+	err = env.images.bucketExists()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	r := gin.Default()
+	r.MaxMultipartMemory = 8 << 20 // Max 8MB
+
 	r.GET("/health-check", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "OK",
