@@ -1,4 +1,4 @@
-package repo
+package conn
 
 import (
 	"github.com/go-redis/redis"

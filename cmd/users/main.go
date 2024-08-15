@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"github.com/duynguyen94/go-newfeeds/cmd/users/repo"
+	repo2 "github.com/duynguyen94/go-newfeeds/pkg/conn"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -610,17 +610,17 @@ func (e *Env) CommentPost(c *gin.Context) {
 func main() {
 	// Setup shared connection,
 	// follow https://www.alexedwards.net/blog/organising-database-access
-	db, err := repo.InitMySQLDBConn()
+	db, err := repo2.InitMySQLDBConn()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cacheClient, err := repo.CreateRedisClient()
+	cacheClient, err := repo2.CreateRedisClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	minIOClient, err := repo.CreateMinioClient()
+	minIOClient, err := repo2.CreateMinioClient()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/duynguyen94/go-newfeeds/cmd/users/repo"
+	"github.com/duynguyen94/go-newfeeds/pkg/conn"
 	"github.com/go-redis/redis"
 	"log"
 )
@@ -28,7 +28,7 @@ func (s *SessionModel) WriteSession(userName string, user *UserRecord) error {
 	value := s.createCookie(user)
 
 	bs, _ := json.Marshal(value)
-	err := s.cache.Set(key, bs, repo.Ttl).Err()
+	err := s.cache.Set(key, bs, conn.Ttl).Err()
 	if err != nil {
 		return err
 	}

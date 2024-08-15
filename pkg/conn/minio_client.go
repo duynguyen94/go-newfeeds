@@ -1,4 +1,4 @@
-package repo
+package conn
 
 import (
 	"github.com/minio/minio-go/v7"
