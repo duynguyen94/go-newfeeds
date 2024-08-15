@@ -328,7 +328,7 @@ func (e *Env) GetPost(c *gin.Context) {
 		return
 	}
 
-	p, err := e.posts.GetPostByid(postId)
+	p, err := e.posts.GetPostById(postId)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -470,7 +470,45 @@ func (e *Env) UploadImage(c *gin.Context) {
 }
 
 func (e *Env) EditPost(c *gin.Context) {
-	// TODO
+	var newPost PostRecord
+	err := c.ShouldBindBodyWithJSON(&newPost)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	postId, err := strconv.Atoi(c.Param("post_id"))
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	curPost, err := e.posts.GetPostById(postId)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	curPost.Merge(&newPost)
+	err = e.posts.OverwritePost(postId, &curPost)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	// TODO Trigger delete cache if possible
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Need implementation",
 	})

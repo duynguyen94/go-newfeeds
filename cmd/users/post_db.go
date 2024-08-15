@@ -6,7 +6,7 @@ type PostDBModel struct {
 	DB *sql.DB
 }
 
-func (m *PostDBModel) GetPostByid(id int) (PostRecord, error) {
+func (m *PostDBModel) GetPostById(id int) (PostRecord, error) {
 	stmtOut, err := m.DB.Prepare("SELECT id, fk_user_id, content_text, content_image_path, created_at FROM `post` WHERE id = ? AND visible = 1")
 	defer stmtOut.Close()
 
@@ -63,8 +63,19 @@ func (m *PostDBModel) UpdateImagePath(postId int, imagePath string) error {
 }
 
 func (m *PostDBModel) OverwritePost(postId int, p *PostRecord) error {
-	// TODO
-	return nil
+	stmtIn, err := m.DB.Prepare("UPDATE `post` SET content_text = ? WHERE id = ?")
+	defer stmtIn.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmtIn.Exec(
+		&p.ContentText,
+		&postId,
+	)
+
+	return err
 }
 
 func (m *PostDBModel) DeletePost(postId int) error {

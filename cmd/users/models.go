@@ -63,12 +63,12 @@ func (u *UserRecord) Merge(updateRecord *UserRecord) {
 }
 
 type PostRecord struct {
-	Id               int    `json:"id"`
-	ContentText      string `json:"text"`
-	ContentImagePath string `json:"imagePath"`
-	CreatedAt        string `json:"createdAt"`
-	UserId           int    `json:"userId"`
-	DownloadUrl      string `json:"downloadUrl"`
+	Id               int    `json:"id,omitempty"`
+	ContentText      string `json:"text,omitempty"`
+	ContentImagePath string `json:"imagePath,omitempty"`
+	CreatedAt        string `json:"createdAt,omitempty"`
+	UserId           int    `json:"userId,omitempty"`
+	DownloadUrl      string `json:"downloadUrl,omitempty"`
 }
 
 func (p *PostRecord) genSignedUrl(storage ImagePostStorageModel, expiration time.Duration) error {
@@ -79,6 +79,14 @@ func (p *PostRecord) genSignedUrl(storage ImagePostStorageModel, expiration time
 
 	p.DownloadUrl = signedUrl
 	return nil
+}
+
+func (p *PostRecord) Merge(newPost *PostRecord) {
+	if newPost.ContentText != "" {
+		p.ContentText = newPost.ContentText
+	}
+
+	// What about image???
 }
 
 type CommentRecord struct {
