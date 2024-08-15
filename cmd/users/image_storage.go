@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/minio/minio-go/v7"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -52,9 +54,21 @@ func (s *ImagePostStorageModel) PutImage(reader *os.File, postId int, filename s
 
 	return info.Key, nil
 }
-func (s *ImagePostStorageModel) GetSignedUrl(path string, expiration time.Time) (string, error) {
-	// TODO
-	return "", nil
+
+func (s *ImagePostStorageModel) GetSignedUrl(path string, expiration time.Duration) (string, error) {
+	reqParams := make(url.Values)
+	//reqParams.Set("response-content-disposition", "attachment; filename=\"your-filename.txt\"")
+
+	presignedURL, err := s.client.PresignedGetObject(
+		context.Background(), s.bucket, path,
+		expiration, reqParams,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	return presignedURL.String(), nil
 }
 func (s *ImagePostStorageModel) DeleteImage(path string) error {
 	// TODO

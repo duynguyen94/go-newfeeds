@@ -6,6 +6,25 @@ type PostDBModel struct {
 	DB *sql.DB
 }
 
+func (m *PostDBModel) GetPostByid(id int) (PostRecord, error) {
+	stmtOut, err := m.DB.Prepare("SELECT id, fk_user_id, content_text, content_image_path, created_at FROM `post` WHERE id = ? AND visible = 1")
+	defer stmtOut.Close()
+
+	var p PostRecord
+
+	if err != nil {
+		return p, err
+	}
+
+	err = stmtOut.QueryRow(id).Scan(
+		&p.Id, &p.UserId, &p.ContentText, &p.ContentImagePath,
+		&p.CreatedAt,
+	)
+
+	return p, err
+
+}
+
 func (m *PostDBModel) CreatePost(p *PostRecord) (int64, error) {
 	stmtIn, err := m.DB.Prepare("INSERT INTO post (fk_user_id, content_text) VALUES (?, ?)")
 	defer stmtIn.Close()

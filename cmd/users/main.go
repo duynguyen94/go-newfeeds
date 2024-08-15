@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Env struct {
@@ -317,9 +318,40 @@ func (e *Env) ViewFriendPostsHandler(c *gin.Context) {
 
 func (e *Env) GetPost(c *gin.Context) {
 	// TODO
+	postId, err := strconv.Atoi(c.Param("post_id"))
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	p, err := e.posts.GetPostByid(postId)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	// Expiration, TODO Move it into somewhere
+	expiration := time.Minute * 30
+	err = p.genSignedUrl(e.images, expiration)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Need implementation",
+		"post": p,
 	})
+
 }
 
 func (e *Env) CreatePost(c *gin.Context) {

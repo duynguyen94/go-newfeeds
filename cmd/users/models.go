@@ -68,4 +68,15 @@ type PostRecord struct {
 	ContentImagePath string `json:"imagePath"`
 	CreatedAt        string `json:"createdAt"`
 	UserId           int    `json:"userId"`
+	DownloadUrl      string `json:"downloadUrl"`
+}
+
+func (p *PostRecord) genSignedUrl(storage ImagePostStorageModel, expiration time.Duration) error {
+	signedUrl, err := storage.GetSignedUrl(p.ContentImagePath, expiration)
+	if err != nil {
+		return err
+	}
+
+	p.DownloadUrl = signedUrl
+	return nil
 }
