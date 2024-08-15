@@ -475,24 +475,97 @@ func (e *Env) EditPost(c *gin.Context) {
 		"message": "Need implementation",
 	})
 }
+
 func (e *Env) DeletePost(c *gin.Context) {
-	// TODO
+	postId, err := strconv.Atoi(c.Param("post_id"))
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	err = e.posts.DeletePost(postId)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Need implementation",
+		"message": "Delete post successfully",
 	})
 }
 
 func (e *Env) LikePost(c *gin.Context) {
-	// TODO
+	postId, err := strconv.Atoi(c.Param("post_id"))
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	var p PostRecord
+	err = c.ShouldBindBodyWithJSON(&p)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	err = e.posts.LikePost(postId, p.UserId)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Need implementation",
+		"message": "Like post successfully",
 	})
 }
 
 func (e *Env) CommentPost(c *gin.Context) {
-	// TODO
+	postId, err := strconv.Atoi(c.Param("post_id"))
+
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	var cmt CommentRecord
+	err = c.ShouldBindBodyWithJSON(&cmt)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
+	cmtId, err := e.posts.CommentPost(postId, cmt.UserId, cmt.ContentText)
+	if err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "err: " + err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Need implementation",
+		"commentId": cmtId,
 	})
 }
 

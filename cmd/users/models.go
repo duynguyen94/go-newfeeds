@@ -80,3 +80,8 @@ func (p *PostRecord) genSignedUrl(storage ImagePostStorageModel, expiration time
 	p.DownloadUrl = signedUrl
 	return nil
 }
+
+type CommentRecord struct {
+	ContentText string `json:"content"`
+	UserId      int    `json:"userId"`
+}

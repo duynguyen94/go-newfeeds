@@ -68,16 +68,55 @@ func (m *PostDBModel) OverwritePost(postId int, p *PostRecord) error {
 }
 
 func (m *PostDBModel) DeletePost(postId int) error {
-	// TODO
-	return nil
+	stmtIn, err := m.DB.Prepare("UPDATE `post` SET visible = 0 WHERE id = ?")
+	defer stmtIn.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmtIn.Exec(
+		&postId,
+	)
+
+	return err
+
 }
 
-func (m *PostDBModel) CommentPost(postId int, content string) (int, error) {
-	// TODO
-	return -1, nil
+func (m *PostDBModel) CommentPost(postId int, userId int, content string) (int64, error) {
+	stmtIn, err := m.DB.Prepare("INSERT INTO comment (fk_post_id, fk_user_id, content) VALUES (?, ?, ?)")
+	defer stmtIn.Close()
+
+	if err != nil {
+		return -1, err
+	}
+
+	result, err := stmtIn.Exec(
+		&postId,
+		&userId,
+		&content,
+	)
+
+	if err != nil {
+		return -1, err
+	}
+
+	newCmtId, err := result.LastInsertId()
+	return newCmtId, err
 }
 
-func (m *PostDBModel) LikePost(postId int) error {
-	// TODO
-	return nil
+func (m *PostDBModel) LikePost(postId int, userId int) error {
+	stmtIn, err := m.DB.Prepare("INSERT INTO `like` (fk_post_id, fk_user_id) VALUES (?, ?)")
+	defer stmtIn.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmtIn.Exec(
+		&postId,
+		&userId,
+	)
+
+	return err
 }
