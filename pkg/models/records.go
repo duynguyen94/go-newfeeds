@@ -1,6 +1,7 @@
-package main
+package models
 
 import (
+	"github.com/duynguyen94/go-newfeeds/pkg/utils"
 	"time"
 )
 
@@ -31,15 +32,15 @@ func (u *UserRecord) DOBtoDate() error {
 }
 
 func (u *UserRecord) HashPassword() {
-	salt := genRandomSalt(saltSize)
-	hashedPass := hashPassword(u.Password, salt)
+	salt := utils.GenRandomSalt(saltSize)
+	hashedPass := utils.HashPassword(u.Password, salt)
 
 	u.salt = salt
 	u.hashedPass = hashedPass
 }
 
 func (u *UserRecord) IsMatchPassword(curPass string) bool {
-	return isPassMatch(u.hashedPass, curPass, u.salt)
+	return utils.IsPassMatch(u.hashedPass, curPass, u.salt)
 }
 
 func (u *UserRecord) Merge(updateRecord *UserRecord) {
@@ -71,7 +72,7 @@ type PostRecord struct {
 	DownloadUrl      string `json:"downloadUrl,omitempty"`
 }
 
-func (p *PostRecord) genSignedUrl(storage ImagePostStorageModel, expiration time.Duration) error {
+func (p *PostRecord) GenSignedUrl(storage ImagePostStorageModel, expiration time.Duration) error {
 	signedUrl, err := storage.GetSignedUrl(p.ContentImagePath, expiration)
 	if err != nil {
 		return err

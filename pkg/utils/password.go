@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"crypto/rand"
@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 )
 
-func genRandomSalt(saltSize int) []byte {
+func GenRandomSalt(saltSize int) []byte {
 	var salt = make([]byte, saltSize)
 
 	_, err := rand.Read(salt[:])
@@ -18,7 +18,7 @@ func genRandomSalt(saltSize int) []byte {
 	return salt
 }
 
-func hashPassword(pass string, salt []byte) string {
+func HashPassword(pass string, salt []byte) string {
 	var passBytes = []byte(pass)
 
 	var sha512Hasher = sha512.New()
@@ -31,7 +31,7 @@ func hashPassword(pass string, salt []byte) string {
 	return hashedPasswordHex
 }
 
-func isPassMatch(hashedPass string, curPass string, salt []byte) bool {
-	var hashedCurPass = hashPassword(curPass, salt)
+func IsPassMatch(hashedPass string, curPass string, salt []byte) bool {
+	var hashedCurPass = HashPassword(curPass, salt)
 	return hashedCurPass == hashedPass
 }

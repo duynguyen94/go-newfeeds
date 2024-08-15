@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	repo2 "github.com/duynguyen94/go-newfeeds/pkg/conn"
+	"github.com/duynguyen94/go-newfeeds/pkg/models"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -13,10 +14,10 @@ import (
 )
 
 type Env struct {
-	users    UserDBModel
-	posts    PostDBModel
-	sessions SessionModel
-	images   ImagePostStorageModel
+	users    models.UserDBModel
+	posts    models.PostDBModel
+	sessions models.SessionModel
+	images   models.ImagePostStorageModel
 }
 
 // TODO Find the way to do it properly
@@ -26,7 +27,7 @@ type friendPayload struct {
 
 func (e *Env) SignUpHandler(c *gin.Context) {
 	// Parse request body
-	var newUserRecord UserRecord
+	var newUserRecord models.UserRecord
 	err := c.ShouldBindBodyWithJSON(&newUserRecord)
 
 	if err != nil {
@@ -64,7 +65,7 @@ func (e *Env) SignUpHandler(c *gin.Context) {
 }
 
 func (e *Env) LoginHandler(c *gin.Context) {
-	var user UserRecord
+	var user models.UserRecord
 	err := c.ShouldBindBodyWithJSON(&user)
 
 	if err != nil {
@@ -136,7 +137,7 @@ func (e *Env) LoginHandler(c *gin.Context) {
 
 func (e *Env) EditProfileHandler(c *gin.Context) {
 	// Parse request body
-	var newUserRecord UserRecord
+	var newUserRecord models.UserRecord
 	err := c.ShouldBindBodyWithJSON(&newUserRecord)
 
 	if err != nil {
@@ -178,7 +179,7 @@ func (e *Env) EditProfileHandler(c *gin.Context) {
 		return
 	}
 
-	err = e.sessions.deleteSession(user.UserName)
+	err = e.sessions.DeleteSession(user.UserName)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -317,7 +318,6 @@ func (e *Env) ViewFriendPostsHandler(c *gin.Context) {
 }
 
 func (e *Env) GetPost(c *gin.Context) {
-	// TODO
 	postId, err := strconv.Atoi(c.Param("post_id"))
 
 	if err != nil {
@@ -339,7 +339,7 @@ func (e *Env) GetPost(c *gin.Context) {
 
 	// Expiration, TODO Move it into somewhere
 	expiration := time.Minute * 30
-	err = p.genSignedUrl(e.images, expiration)
+	err = p.GenSignedUrl(e.images, expiration)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -355,7 +355,7 @@ func (e *Env) GetPost(c *gin.Context) {
 }
 
 func (e *Env) CreatePost(c *gin.Context) {
-	var post PostRecord
+	var post models.PostRecord
 	err := c.ShouldBindBodyWithJSON(&post)
 
 	if err != nil {
@@ -470,7 +470,7 @@ func (e *Env) UploadImage(c *gin.Context) {
 }
 
 func (e *Env) EditPost(c *gin.Context) {
-	var newPost PostRecord
+	var newPost models.PostRecord
 	err := c.ShouldBindBodyWithJSON(&newPost)
 	if err != nil {
 		log.Println(err.Error())
@@ -548,7 +548,7 @@ func (e *Env) LikePost(c *gin.Context) {
 		return
 	}
 
-	var p PostRecord
+	var p models.PostRecord
 	err = c.ShouldBindBodyWithJSON(&p)
 	if err != nil {
 		log.Println(err.Error())
@@ -583,7 +583,7 @@ func (e *Env) CommentPost(c *gin.Context) {
 		return
 	}
 
-	var cmt CommentRecord
+	var cmt models.CommentRecord
 	err = c.ShouldBindBodyWithJSON(&cmt)
 	if err != nil {
 		log.Println(err.Error())
@@ -626,14 +626,14 @@ func main() {
 	}
 
 	env := &Env{
-		users:    UserDBModel{DB: db},
-		posts:    PostDBModel{DB: db},
-		sessions: SessionModel{cache: cacheClient},
-		images:   ImagePostStorageModel{client: minIOClient, bucket: defaultBucket},
+		users:    models.UserDBModel{DB: db},
+		posts:    models.PostDBModel{DB: db},
+		sessions: models.SessionModel{Client: cacheClient},
+		images:   models.ImagePostStorageModel{Client: minIOClient, Bucket: models.DefaultBucket},
 	}
 
 	// Simple ping
-	err = env.images.bucketExists()
+	err = env.images.BucketExists()
 	if err != nil {
 		log.Fatal(err)
 	}

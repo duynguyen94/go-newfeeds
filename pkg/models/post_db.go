@@ -1,6 +1,8 @@
-package main
+package models
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type PostDBModel struct {
 	DB *sql.DB

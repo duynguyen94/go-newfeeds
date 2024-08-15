@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	"context"
@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	defaultBucket = "images"
+	DefaultBucket = "images"
 )
 
 type ImagePostStorageModel struct {
-	client *minio.Client
-	bucket string
+	Client *minio.Client
+	Bucket string
 }
 
-func (s *ImagePostStorageModel) bucketExists() error {
+func (s *ImagePostStorageModel) BucketExists() error {
 	ctx := context.Background()
-	exists, errBucketExists := s.client.BucketExists(ctx, s.bucket)
+	exists, errBucketExists := s.Client.BucketExists(ctx, s.Bucket)
 
 	if errBucketExists != nil {
 		return errBucketExists
@@ -43,8 +43,8 @@ func (s *ImagePostStorageModel) getKey(postId int, filename string) string {
 func (s *ImagePostStorageModel) PutImage(reader *os.File, postId int, filename string, fileSize int64) (string, error) {
 	objectKey := s.getKey(postId, filename)
 
-	info, err := s.client.PutObject(
-		context.Background(), s.bucket, objectKey,
+	info, err := s.Client.PutObject(
+		context.Background(), s.Bucket, objectKey,
 		reader, fileSize, minio.PutObjectOptions{},
 	)
 
@@ -58,8 +58,8 @@ func (s *ImagePostStorageModel) PutImage(reader *os.File, postId int, filename s
 func (s *ImagePostStorageModel) GetSignedUrl(path string, expiration time.Duration) (string, error) {
 	reqParams := make(url.Values)
 
-	presignedURL, err := s.client.PresignedGetObject(
-		context.Background(), s.bucket, path,
+	presignedURL, err := s.Client.PresignedGetObject(
+		context.Background(), s.Bucket, path,
 		expiration, reqParams,
 	)
 	if err != nil {

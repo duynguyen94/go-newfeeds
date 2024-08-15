@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 )
 
 type SessionModel struct {
-	cache *redis.Client
+	Client *redis.Client
 }
 
 func (s *SessionModel) createCookie(user *UserRecord) map[string]string {
@@ -28,7 +28,7 @@ func (s *SessionModel) WriteSession(userName string, user *UserRecord) error {
 	value := s.createCookie(user)
 
 	bs, _ := json.Marshal(value)
-	err := s.cache.Set(key, bs, conn.Ttl).Err()
+	err := s.Client.Set(key, bs, conn.Ttl).Err()
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (s *SessionModel) WriteSession(userName string, user *UserRecord) error {
 
 func (s *SessionModel) ReadSession(userName string) (map[string]string, error) {
 	key := s.createKey(userName)
-	valueStr, err := s.cache.Get(key).Result()
+	valueStr, err := s.Client.Get(key).Result()
 
 	// Empty
 	if err == redis.Nil {
@@ -59,6 +59,6 @@ func (s *SessionModel) ReadSession(userName string) (map[string]string, error) {
 	return res, nil
 }
 
-func (s *SessionModel) deleteSession(userName string) error {
-	return s.cache.Del(userName).Err()
+func (s *SessionModel) DeleteSession(userName string) error {
+	return s.Client.Del(userName).Err()
 }
