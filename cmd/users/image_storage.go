@@ -57,7 +57,6 @@ func (s *ImagePostStorageModel) PutImage(reader *os.File, postId int, filename s
 
 func (s *ImagePostStorageModel) GetSignedUrl(path string, expiration time.Duration) (string, error) {
 	reqParams := make(url.Values)
-	//reqParams.Set("response-content-disposition", "attachment; filename=\"your-filename.txt\"")
 
 	presignedURL, err := s.client.PresignedGetObject(
 		context.Background(), s.bucket, path,
