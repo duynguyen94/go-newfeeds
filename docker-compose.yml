@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: newsfeed
       MYSQL_USER: mysql
       MYSQL_PASSWORD: mysql
@@ -20,12 +21,13 @@ services:
       - app-network
 
   redis:
-    image: redis:alpine
+    image: redis:6.2-alpine
     container_name: redis
     restart: unless-stopped
 #    network_mode: bridge
     ports:
       - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning
     networks:
       - app-network
 
@@ -62,8 +64,8 @@ services:
       ASYNCQ_REDIS_ADDR: redis
       MINIO_ENDPOINT: minio
       MINIO_API_PORT: 9000
-      MINIO_ACCESS_KEY_ID: "JxTyUZQukUVL3WIA7N05"
-      MINIO_SECRET_ACCESS_KEY: "8dyeIfKJzZuMEbjIoYWTU5zIC4Q4nELaJ6ZYbozd"
+      MINIO_ACCESS_KEY_ID: "admin"
+      MINIO_SECRET_ACCESS_KEY: "12345678"
       MYSQL_HOST: "mysql"
       MYSQL_PORT: "3306"
       MYSQL_USER: "mysql"
@@ -73,13 +75,15 @@ services:
       REDIS_PORT: "6379"
       REDIS_DB: 0
     links:
-      - "mysql:mysql"
-      - "redis:redis"
-      - "minio:minio"
+      - mysql
+      - redis
+      - minio
+      - newsfeed-go-app
     depends_on:
       - mysql
       - redis
       - minio
+      - newsfeed-go-app
     networks:
       - app-network
 
@@ -107,12 +111,13 @@ services:
       REDIS_PORT: "6379"
       REDIS_DB: 0
     links:
-      - "mysql:mysql"
-      - "redis:redis"
-      - "minio:minio"
-    depends_on:
-      - users-go-app
       - mysql
+      - redis
+      - minio
+    depends_on:
+      - mysql
+      - redis
+      - minio
     networks:
       - app-network
 
@@ -122,4 +127,3 @@ volumes:
 
 networks:
   app-network:
-    external: true

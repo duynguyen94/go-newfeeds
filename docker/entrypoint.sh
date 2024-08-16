@@ -2,6 +2,22 @@
 
 set -e
 
+until nc -z -v -w30 "$MYSQL_HOST" "$MYSQL_PORT"
+do
+  echo "Waiting for database connection..."
+  sleep 1
+done
+
+echo "MySQL is up and running"
+
+until nc -z -v -w30 "$REDIS_HOST" "$REDIS_PORT"
+do
+  echo "Waiting for redis connection..."
+  sleep 1
+done
+
+echo "Redis is up and running"
+
 echo "Running option $1"
 
 # Check the first argument passed to the script
