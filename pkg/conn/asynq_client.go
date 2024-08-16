@@ -2,15 +2,11 @@ package conn
 
 import (
 	"github.com/hibiken/asynq"
-)
-
-// TODO Load from env
-const (
-	redisAddr = "localhost:6379"
+	"os"
 )
 
 func CreateAsyncQClient() (*asynq.Client, error) {
-	client := asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr})
+	client := asynq.NewClient(asynq.RedisClientOpt{Addr: os.Getenv("ASYNCQ_REDIS_ADDR")})
 	defer client.Close()
 	return client, nil
 }

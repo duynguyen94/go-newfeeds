@@ -72,6 +72,7 @@ func (app *App) GenNewsfeedHandler(c *gin.Context) {
 }
 
 func main() {
+	log.Println("Starting newsfeed services")
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal(err)

@@ -15,10 +15,10 @@ COPY . .
 
 # Build the Go app
 # Build the user Go service
-RUN go build -o users-service ./cmd/users
+RUN go build -o users-service ./cmd/users/*
 
 # Build the newsfeed Go service
-RUN go build -o newsfeed-service ./cmd/newsfeed
+RUN go build -o newsfeed-service ./cmd/newsfeed/*
 
 # Copy the entrypoint script into the container
 COPY docker/entrypoint.sh /app/entrypoint.sh

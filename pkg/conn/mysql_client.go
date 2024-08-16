@@ -4,26 +4,18 @@ import (
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"log"
+	"os"
 	"time"
-)
-
-// TODO Load from env
-const (
-	defaultHost = "127.0.0.1"
-	defaultPort = "3306"
-	defaultUser = "mysql"
-	defaultPass = "mysql"
-	defaultName = "newsfeed"
 )
 
 func InitMySQLDBConn() (*sql.DB, error) {
 	// Specify connection properties.
 	cfg := mysql.Config{
-		User:   defaultUser,
-		Passwd: defaultPass,
+		User:   os.Getenv("MYSQL_USER"),
+		Passwd: os.Getenv("MYSQL_PASS"),
 		Net:    "tcp",
-		Addr:   defaultHost + ":" + defaultPort,
-		DBName: defaultName,
+		Addr:   os.Getenv("MYSQL_HOST") + ":" + os.Getenv("MYSQL_PORT"),
+		DBName: os.Getenv("MYSQL_DATABASE"),
 	}
 
 	// Get a driver-specific connector.

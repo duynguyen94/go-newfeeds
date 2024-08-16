@@ -3,20 +3,17 @@ package conn
 import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-)
-
-const (
-	defaultEndpoint        = "localhost:9000"
-	defaultAccessKeyID     = "JxTyUZQukUVL3WIA7N05"
-	defaultSecretAccessKey = "8dyeIfKJzZuMEbjIoYWTU5zIC4Q4nELaJ6ZYbozd"
-	defaultUseSSL          = false
+	"os"
 )
 
 func CreateMinioClient() (*minio.Client, error) {
 	// Initialize minio client object.
-	minioClient, err := minio.New(defaultEndpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(defaultAccessKeyID, defaultSecretAccessKey, ""),
-		Secure: defaultUseSSL,
+	minioClient, err := minio.New(os.Getenv("MINIO_ENDPOINT")+":"+os.Getenv("MINIO_API_PORT"), &minio.Options{
+		Creds: credentials.NewStaticV4(
+			os.Getenv("MINIO_ACCESS_KEY_ID"),
+			os.Getenv("MINIO_SECRET_ACCESS_KEY"), "",
+		),
+		Secure: false,
 	})
 
 	if err != nil {

@@ -612,6 +612,7 @@ func (e *Env) CommentPost(c *gin.Context) {
 }
 
 func main() {
+	log.Println("Starting user services")
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal(err)

@@ -2,23 +2,27 @@ package conn
 
 import (
 	"github.com/go-redis/redis"
+	"os"
+	"strconv"
 	"time"
 )
 
-// TODO Load from env
 const (
-	Ttl       = time.Minute * 15
-	redisHost = "localhost:6379"
-	redisDb   = 0
+	Ttl = time.Minute * 15
 )
 
 func CreateRedisClient() (*redis.Client, error) {
+	db, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+	if err != nil {
+		return nil, err
+	}
+
 	client := redis.NewClient(&redis.Options{
-		Addr: redisHost,
-		DB:   redisDb,
+		Addr: os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
+		DB:   db,
 	})
 
-	_, err := client.Ping().Result()
+	_, err = client.Ping().Result()
 
 	if err != nil {
 		return nil, err
