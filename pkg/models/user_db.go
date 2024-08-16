@@ -199,3 +199,38 @@ func (m UserDBModel) ViewFriendPost(id int) ([]PostRecord, error) {
 
 	return posts, nil
 }
+
+func (m UserDBModel) ViewPosts(id int) ([]PostRecord, error) {
+	stmtOut, err := m.DB.Prepare("SELECT id, content_text, content_image_path, created_at FROM `post` p WHERE p.fk_user_id = ? AND visible = 1")
+	defer stmtOut.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := stmtOut.Query(id)
+	defer rows.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	var posts []PostRecord
+	for rows.Next() {
+		var p PostRecord
+
+		err := rows.Scan(&p.Id, &p.ContentText, &p.ContentImagePath, &p.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, p)
+	}
+
+	return posts, nil
+}
