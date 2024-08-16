@@ -48,6 +48,22 @@ services:
     networks:
       - app-network
 
+  createbuckets:
+    image: minio/minio
+    depends_on:
+      - minio
+    links:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 admin 12345678;
+      /usr/bin/mc mb myminio/images;
+      /usr/bin/mc policy set public myminio/images;
+      exit 0;
+      "
+    networks:
+      - app-network
+
   users-go-app:
     build:
       context: .
@@ -82,7 +98,7 @@ services:
     depends_on:
       - mysql
       - redis
-      - minio
+      - createbuckets
       - newsfeed-go-app
     networks:
       - app-network
@@ -100,8 +116,8 @@ services:
       ASYNCQ_REDIS_ADDR: redis
       MINIO_ENDPOINT: minio
       MINIO_API_PORT: 9000
-      MINIO_ACCESS_KEY_ID: "JxTyUZQukUVL3WIA7N05"
-      MINIO_SECRET_ACCESS_KEY: "8dyeIfKJzZuMEbjIoYWTU5zIC4Q4nELaJ6ZYbozd"
+      MINIO_ACCESS_KEY_ID: "admin"
+      MINIO_SECRET_ACCESS_KEY: "12345678"
       MYSQL_HOST: "mysql"
       MYSQL_PORT: "3306"
       MYSQL_USER: "mysql"
@@ -117,7 +133,7 @@ services:
     depends_on:
       - mysql
       - redis
-      - minio
+      - createbuckets
     networks:
       - app-network
 

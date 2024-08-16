@@ -31,9 +31,7 @@ func InitMySQLDBConn() (*sql.DB, error) {
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 
-	err = db.Ping()
-
-	if err != nil {
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 
