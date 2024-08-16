@@ -40,6 +40,35 @@ services:
     volumes:
       - minio_data:/data
 
+  users-go-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: newsfeed-project:0.1
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    command:
+      - "-users-api"
+    environment:
+      NEWSFEED_SERVICE_ADDR: newsfeed-go-app
+    depends_on:
+      - mysql
+      - redis
+      - minio
+
+  newsfeed-go-app:
+    image: newsfeed-project:0.1
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    command:
+      - "-newsfeed-api"
+    environment:
+      NEWSFEED_SERVICE_ADDR: users-go-app
+    depends_on:
+      - users-go-app
+
 volumes:
   mysql_data:
   minio_data:
