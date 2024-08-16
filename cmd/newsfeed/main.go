@@ -4,6 +4,7 @@ import (
 	repo2 "github.com/duynguyen94/go-newfeeds/pkg/conn"
 	"github.com/duynguyen94/go-newfeeds/pkg/models"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"strconv"
@@ -71,6 +72,11 @@ func (app *App) GenNewsfeedHandler(c *gin.Context) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	db, err := repo2.InitMySQLDBConn()
 	if err != nil {
 		log.Fatal(err)
@@ -118,5 +124,5 @@ func main() {
 	r.GET("/v1/newsfeeds/:id", app.GetNewsfeedsHandler)
 	r.POST("/v1/newsfeeds/:id", app.GenNewsfeedHandler)
 
-	r.Run()
+	r.Run(":8081")
 }

@@ -167,7 +167,7 @@ func (m UserDBModel) ViewFollowers(id int) ([]UserRecord, error) {
 func (m UserDBModel) ViewFriendPost(id int) ([]PostRecord, error) {
 	var posts []PostRecord
 
-	stmtOut, err := m.DB.Prepare("SELECT id, content_text, content_image_path, created_at FROM `user_user` u_u LEFT JOIN `post` p ON u_u.fk_follower_id = p.fk_user_id WHERE u_u.fk_user_id = ? AND visible = 1")
+	stmtOut, err := m.DB.Prepare("SELECT id, content_text, IFNULL(content_image_path, '') AS content_image_path, created_at FROM `user_user` u_u LEFT JOIN `post` p ON u_u.fk_follower_id = p.fk_user_id WHERE u_u.fk_user_id = ? AND visible = 1")
 	defer stmtOut.Close()
 
 	if err != nil {
@@ -201,7 +201,7 @@ func (m UserDBModel) ViewFriendPost(id int) ([]PostRecord, error) {
 }
 
 func (m UserDBModel) ViewPosts(id int) ([]PostRecord, error) {
-	stmtOut, err := m.DB.Prepare("SELECT id, content_text, content_image_path, created_at FROM `post` p WHERE p.fk_user_id = ? AND visible = 1")
+	stmtOut, err := m.DB.Prepare("SELECT id, content_text, IFNULL(content_image_path, '') AS content_image_path, created_at FROM `post` p WHERE p.fk_user_id = ? AND visible = 1")
 	defer stmtOut.Close()
 
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	repo2 "github.com/duynguyen94/go-newfeeds/pkg/conn"
 	"github.com/duynguyen94/go-newfeeds/pkg/models"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
@@ -374,6 +375,7 @@ func (e *Env) CreatePost(c *gin.Context) {
 		})
 		return
 	}
+	defer triggerGenNewsfeed(post.UserId)
 
 	c.JSON(http.StatusOK, gin.H{
 		"postId": postId,
@@ -508,6 +510,8 @@ func (e *Env) EditPost(c *gin.Context) {
 		return
 	}
 
+	defer triggerGenNewsfeed(curPost.UserId)
+
 	// TODO Trigger delete cache if possible
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Need implementation",
@@ -608,6 +612,11 @@ func (e *Env) CommentPost(c *gin.Context) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Setup shared connection,
 	// follow https://www.alexedwards.net/blog/organising-database-access
 	db, err := repo2.InitMySQLDBConn()

@@ -38,17 +38,14 @@ func (processor *TaskProcessor) GenNewsfeed(userId int) error {
 		log.Println(err)
 		return err
 	}
-	log.Println(userPosts)
 
 	friendPosts, err := processor.users.ViewFriendPost(userId)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	log.Println(friendPosts)
 
 	userPosts = append(userPosts, friendPosts...)
-	log.Println(userPosts)
 
 	err = processor.posts.WritePost(userId, userPosts)
 	if err != nil {

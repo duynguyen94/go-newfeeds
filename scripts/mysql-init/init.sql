@@ -13,7 +13,7 @@ CREATE TABLE `post` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fk_user_id INT,
     content_text TEXT NOT NULL,
-    content_image_path VARCHAR(255),
+    content_image_path VARCHAR(255) NOT NULL DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     visible BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (fk_user_id) REFERENCES `user`(id)
