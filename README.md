@@ -22,7 +22,7 @@ The Go-NewFeeds project is designed to provide a simple social networking backen
 
 ## Architecture
 
-![](assets/high-level-design.png)
+![High Level Design](assets/high-level-design.png)
 
 ### Components
 - **Go Backend**: The core backend logic, including API endpoints and database interactions, is written in Go.
