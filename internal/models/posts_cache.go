@@ -2,7 +2,8 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/duynguyen94/go-newfeeds/pkg/conn"
+	"github.com/duynguyen94/go-newfeeds/internal/conn"
+	models2 "github.com/duynguyen94/go-newfeeds/internal/payloads"
 	"github.com/go-redis/redis"
 	"strconv"
 )
@@ -15,7 +16,7 @@ func (p *PostCacheModel) createKey(userId int) string {
 	return strconv.Itoa(userId) + "-newsfeed"
 }
 
-func (p *PostCacheModel) WritePost(userId int, posts []PostRecord) error {
+func (p *PostCacheModel) WritePost(userId int, posts []models2.PostRecord) error {
 	key := p.createKey(userId)
 	bs, err := json.Marshal(posts)
 
@@ -31,7 +32,7 @@ func (p *PostCacheModel) WritePost(userId int, posts []PostRecord) error {
 	return nil
 }
 
-func (p *PostCacheModel) ReadPost(userId int) ([]PostRecord, error) {
+func (p *PostCacheModel) ReadPost(userId int) ([]models2.PostRecord, error) {
 	key := p.createKey(userId)
 
 	valueStr, err := p.Client.Get(key).Result()
@@ -45,7 +46,7 @@ func (p *PostCacheModel) ReadPost(userId int) ([]PostRecord, error) {
 		return nil, err
 	}
 
-	var res []PostRecord
+	var res []models2.PostRecord
 	err = json.Unmarshal([]byte(valueStr), &res)
 
 	if err != nil {

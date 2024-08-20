@@ -2,13 +2,14 @@ package models
 
 import (
 	"database/sql"
+	models2 "github.com/duynguyen94/go-newfeeds/internal/payloads"
 )
 
 type UserDBModel struct {
 	DB *sql.DB
 }
 
-func (m UserDBModel) CreateNewUser(newUser UserRecord) (int64, error) {
+func (m UserDBModel) CreateNewUser(newUser models2.UserRecord) (int64, error) {
 	stmtIn, err := m.DB.Prepare("INSERT INTO user (first_name, last_name, user_name, email, salt, hashed_password, dob) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	defer stmtIn.Close()
 
@@ -39,11 +40,11 @@ func (m UserDBModel) CreateNewUser(newUser UserRecord) (int64, error) {
 
 }
 
-func (m UserDBModel) GetUserRecord(id int) (UserRecord, error) {
+func (m UserDBModel) GetUserRecord(id int) (models2.UserRecord, error) {
 	stmtOut, err := m.DB.Prepare("SELECT first_name, last_name, user_name, email, salt, hashed_password FROM user WHERE id = ?")
 	defer stmtOut.Close()
 
-	var user UserRecord
+	var user models2.UserRecord
 
 	if err != nil {
 		return user, err
@@ -61,11 +62,11 @@ func (m UserDBModel) GetUserRecord(id int) (UserRecord, error) {
 	return user, err
 }
 
-func (m UserDBModel) GetUserRecordByUsername(username string) (UserRecord, error) {
+func (m UserDBModel) GetUserRecordByUsername(username string) (models2.UserRecord, error) {
 	stmtOut, err := m.DB.Prepare("SELECT first_name, last_name, user_name, email, salt, hashed_password FROM user WHERE user_name = ?")
 	defer stmtOut.Close()
 
-	var user UserRecord
+	var user models2.UserRecord
 
 	if err != nil {
 		return user, err
@@ -83,7 +84,7 @@ func (m UserDBModel) GetUserRecordByUsername(username string) (UserRecord, error
 	return user, err
 }
 
-func (m UserDBModel) OverwriteUserRecord(id int, user *UserRecord) error {
+func (m UserDBModel) OverwriteUserRecord(id int, user *models2.UserRecord) error {
 	stmtIn, err := m.DB.Prepare("UPDATE `user` SET first_name = ?, last_name = ?, user_name = ?, email = ?, salt = ?, hashed_password = ? WHERE id = ? ")
 	defer stmtIn.Close()
 
@@ -128,8 +129,8 @@ func (m UserDBModel) UnFollowUser(id int, friendId int) error {
 	return err
 }
 
-func (m UserDBModel) ViewFollowers(id int) ([]UserRecord, error) {
-	var followers []UserRecord
+func (m UserDBModel) ViewFollowers(id int) ([]models2.UserRecord, error) {
+	var followers []models2.UserRecord
 
 	stmtOut, err := m.DB.Prepare("SELECT first_name, last_name, email, user_name FROM `user_user` u_u LEFT JOIN `user` u ON(u_u.fk_follower_id = u.id) WHERE u_u.fk_user_id = ?")
 	defer stmtOut.Close()
@@ -146,7 +147,7 @@ func (m UserDBModel) ViewFollowers(id int) ([]UserRecord, error) {
 	}
 
 	for rows.Next() {
-		var u UserRecord
+		var u models2.UserRecord
 
 		err := rows.Scan(&u.FirstName, &u.LastName, &u.Email, &u.UserName)
 		if err != nil {
@@ -164,8 +165,8 @@ func (m UserDBModel) ViewFollowers(id int) ([]UserRecord, error) {
 	return followers, nil
 }
 
-func (m UserDBModel) ViewFriendPost(id int) ([]PostRecord, error) {
-	var posts []PostRecord
+func (m UserDBModel) ViewFriendPost(id int) ([]models2.PostRecord, error) {
+	var posts []models2.PostRecord
 
 	stmtOut, err := m.DB.Prepare("SELECT id, content_text, IFNULL(content_image_path, '') AS content_image_path, created_at FROM `user_user` u_u LEFT JOIN `post` p ON u_u.fk_follower_id = p.fk_user_id WHERE u_u.fk_user_id = ? AND visible = 1")
 	defer stmtOut.Close()
@@ -182,7 +183,7 @@ func (m UserDBModel) ViewFriendPost(id int) ([]PostRecord, error) {
 	}
 
 	for rows.Next() {
-		var p PostRecord
+		var p models2.PostRecord
 
 		err := rows.Scan(&p.Id, &p.ContentText, &p.ContentImagePath, &p.CreatedAt)
 		if err != nil {
@@ -200,7 +201,7 @@ func (m UserDBModel) ViewFriendPost(id int) ([]PostRecord, error) {
 	return posts, nil
 }
 
-func (m UserDBModel) ViewPosts(id int) ([]PostRecord, error) {
+func (m UserDBModel) ViewPosts(id int) ([]models2.PostRecord, error) {
 	stmtOut, err := m.DB.Prepare("SELECT id, content_text, IFNULL(content_image_path, '') AS content_image_path, created_at FROM `post` p WHERE p.fk_user_id = ? AND visible = 1")
 	defer stmtOut.Close()
 
@@ -220,9 +221,9 @@ func (m UserDBModel) ViewPosts(id int) ([]PostRecord, error) {
 		return nil, err
 	}
 
-	var posts []PostRecord
+	var posts []models2.PostRecord
 	for rows.Next() {
-		var p PostRecord
+		var p models2.PostRecord
 
 		err := rows.Scan(&p.Id, &p.ContentText, &p.ContentImagePath, &p.CreatedAt)
 		if err != nil {

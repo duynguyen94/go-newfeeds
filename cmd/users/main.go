@@ -2,8 +2,9 @@ package main
 
 import (
 	"errors"
-	repo2 "github.com/duynguyen94/go-newfeeds/pkg/conn"
-	"github.com/duynguyen94/go-newfeeds/pkg/models"
+	"github.com/duynguyen94/go-newfeeds/internal/conn"
+	models2 "github.com/duynguyen94/go-newfeeds/internal/models"
+	"github.com/duynguyen94/go-newfeeds/internal/payloads"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"io"
@@ -15,10 +16,10 @@ import (
 )
 
 type Env struct {
-	users    models.UserDBModel
-	posts    models.PostDBModel
-	sessions models.SessionModel
-	images   models.ImagePostStorageModel
+	users    models2.UserDBModel
+	posts    models2.PostDBModel
+	sessions models2.SessionModel
+	images   models2.ImagePostStorageModel
 }
 
 // TODO Find the way to do it properly
@@ -28,7 +29,7 @@ type friendPayload struct {
 
 func (e *Env) SignUpHandler(c *gin.Context) {
 	// Parse request body
-	var newUserRecord models.UserRecord
+	var newUserRecord payloads.UserRecord
 	err := c.ShouldBindBodyWithJSON(&newUserRecord)
 
 	if err != nil {
@@ -66,7 +67,7 @@ func (e *Env) SignUpHandler(c *gin.Context) {
 }
 
 func (e *Env) LoginHandler(c *gin.Context) {
-	var user models.UserRecord
+	var user payloads.UserRecord
 	err := c.ShouldBindBodyWithJSON(&user)
 
 	if err != nil {
@@ -138,7 +139,7 @@ func (e *Env) LoginHandler(c *gin.Context) {
 
 func (e *Env) EditProfileHandler(c *gin.Context) {
 	// Parse request body
-	var newUserRecord models.UserRecord
+	var newUserRecord payloads.UserRecord
 	err := c.ShouldBindBodyWithJSON(&newUserRecord)
 
 	if err != nil {
@@ -356,7 +357,7 @@ func (e *Env) GetPost(c *gin.Context) {
 }
 
 func (e *Env) CreatePost(c *gin.Context) {
-	var post models.PostRecord
+	var post payloads.PostRecord
 	err := c.ShouldBindBodyWithJSON(&post)
 
 	if err != nil {
@@ -472,7 +473,7 @@ func (e *Env) UploadImage(c *gin.Context) {
 }
 
 func (e *Env) EditPost(c *gin.Context) {
-	var newPost models.PostRecord
+	var newPost payloads.PostRecord
 	err := c.ShouldBindBodyWithJSON(&newPost)
 	if err != nil {
 		log.Println(err.Error())
@@ -552,7 +553,7 @@ func (e *Env) LikePost(c *gin.Context) {
 		return
 	}
 
-	var p models.PostRecord
+	var p payloads.PostRecord
 	err = c.ShouldBindBodyWithJSON(&p)
 	if err != nil {
 		log.Println(err.Error())
@@ -587,7 +588,7 @@ func (e *Env) CommentPost(c *gin.Context) {
 		return
 	}
 
-	var cmt models.CommentRecord
+	var cmt payloads.CommentRecord
 	err = c.ShouldBindBodyWithJSON(&cmt)
 	if err != nil {
 		log.Println(err.Error())
@@ -620,26 +621,26 @@ func main() {
 
 	// Setup shared connection,
 	// follow https://www.alexedwards.net/blog/organising-database-access
-	db, err := repo2.InitMySQLDBConn()
+	db, err := conn.InitMySQLDBConn()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cacheClient, err := repo2.CreateRedisClient()
+	cacheClient, err := conn.CreateRedisClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	minIOClient, err := repo2.CreateMinioClient()
+	minIOClient, err := conn.CreateMinioClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	env := &Env{
-		users:    models.UserDBModel{DB: db},
-		posts:    models.PostDBModel{DB: db},
-		sessions: models.SessionModel{Client: cacheClient},
-		images:   models.ImagePostStorageModel{Client: minIOClient, Bucket: models.DefaultBucket},
+		users:    models2.UserDBModel{DB: db},
+		posts:    models2.PostDBModel{DB: db},
+		sessions: models2.SessionModel{Client: cacheClient},
+		images:   models2.ImagePostStorageModel{Client: minIOClient, Bucket: models2.DefaultBucket},
 	}
 
 	// Simple ping

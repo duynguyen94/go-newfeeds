@@ -1,7 +1,8 @@
-package models
+package payloads
 
 import (
-	"github.com/duynguyen94/go-newfeeds/pkg/utils"
+	"github.com/duynguyen94/go-newfeeds/internal/models"
+	"github.com/duynguyen94/go-newfeeds/internal/utils"
 	"time"
 )
 
@@ -72,7 +73,7 @@ type PostRecord struct {
 	DownloadUrl      string `json:"downloadUrl,omitempty"`
 }
 
-func (p *PostRecord) GenSignedUrl(storage ImagePostStorageModel, expiration time.Duration) error {
+func (p *PostRecord) GenSignedUrl(storage models.ImagePostStorageModel, expiration time.Duration) error {
 	signedUrl, err := storage.GetSignedUrl(p.ContentImagePath, expiration)
 	if err != nil {
 		return err

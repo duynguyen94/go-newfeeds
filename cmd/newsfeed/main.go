@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/duynguyen94/go-newfeeds/internal/async"
+	"github.com/duynguyen94/go-newfeeds/internal/conn"
+	models2 "github.com/duynguyen94/go-newfeeds/internal/models"
 	"github.com/duynguyen94/go-newfeeds/internal/services"
-	"github.com/duynguyen94/go-newfeeds/pkg/conn"
-	"github.com/duynguyen94/go-newfeeds/pkg/models"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
@@ -39,13 +39,13 @@ func main() {
 	}
 
 	app := &services.NewsfeedServices{
-		Users:        models.UserDBModel{DB: db},
-		Posts:        models.PostCacheModel{Client: cacheClient},
-		ImageStorage: models.ImagePostStorageModel{Client: minIOClient, Bucket: models.DefaultBucket},
+		Users:        models2.UserDBModel{DB: db},
+		Posts:        models2.PostCacheModel{Client: cacheClient},
+		ImageStorage: models2.ImagePostStorageModel{Client: minIOClient, Bucket: models2.DefaultBucket},
 		Tasks: async.TaskProcessor{
 			Client: asyncqClient,
-			Users:  models.UserDBModel{DB: db},
-			Posts:  models.PostCacheModel{Client: cacheClient},
+			Users:  models2.UserDBModel{DB: db},
+			Posts:  models2.PostCacheModel{Client: cacheClient},
 		},
 	}
 

@@ -2,7 +2,7 @@ package async
 
 import (
 	"encoding/json"
-	"github.com/duynguyen94/go-newfeeds/pkg/models"
+	models2 "github.com/duynguyen94/go-newfeeds/internal/models"
 	"github.com/hibiken/asynq"
 	"log"
 	"time"
@@ -18,8 +18,8 @@ type newsfeedTaskPayload struct {
 
 type TaskProcessor struct {
 	Client *asynq.Client
-	Users  models.UserDBModel
-	Posts  models.PostCacheModel
+	Users  models2.UserDBModel
+	Posts  models2.PostCacheModel
 }
 
 func (processor *TaskProcessor) GenNewsfeedTasks(userId int) (*asynq.Task, error) {

@@ -2,17 +2,18 @@ package models
 
 import (
 	"database/sql"
+	models2 "github.com/duynguyen94/go-newfeeds/internal/payloads"
 )
 
 type PostDBModel struct {
 	DB *sql.DB
 }
 
-func (m *PostDBModel) GetPostById(id int) (PostRecord, error) {
+func (m *PostDBModel) GetPostById(id int) (models2.PostRecord, error) {
 	stmtOut, err := m.DB.Prepare("SELECT id, fk_user_id, content_text, IFNULL(content_image_path, '') AS content_image_path, created_at FROM `post` WHERE id = ? AND visible = 1")
 	defer stmtOut.Close()
 
-	var p PostRecord
+	var p models2.PostRecord
 
 	if err != nil {
 		return p, err
@@ -27,7 +28,7 @@ func (m *PostDBModel) GetPostById(id int) (PostRecord, error) {
 
 }
 
-func (m *PostDBModel) CreatePost(p *PostRecord) (int64, error) {
+func (m *PostDBModel) CreatePost(p *models2.PostRecord) (int64, error) {
 	stmtIn, err := m.DB.Prepare("INSERT INTO post (fk_user_id, content_text) VALUES (?, ?)")
 	defer stmtIn.Close()
 
@@ -64,7 +65,7 @@ func (m *PostDBModel) UpdateImagePath(postId int, imagePath string) error {
 	return err
 }
 
-func (m *PostDBModel) OverwritePost(postId int, p *PostRecord) error {
+func (m *PostDBModel) OverwritePost(postId int, p *models2.PostRecord) error {
 	stmtIn, err := m.DB.Prepare("UPDATE `post` SET content_text = ? WHERE id = ?")
 	defer stmtIn.Close()
 

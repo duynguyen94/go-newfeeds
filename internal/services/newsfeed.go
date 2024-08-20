@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/duynguyen94/go-newfeeds/internal/async"
-	"github.com/duynguyen94/go-newfeeds/pkg/models"
+	models2 "github.com/duynguyen94/go-newfeeds/internal/models"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -10,9 +10,9 @@ import (
 )
 
 type NewsfeedServices struct {
-	Users        models.UserDBModel
-	Posts        models.PostCacheModel
-	ImageStorage models.ImagePostStorageModel
+	Users        models2.UserDBModel
+	Posts        models2.PostCacheModel
+	ImageStorage models2.ImagePostStorageModel
 	Tasks        async.TaskProcessor
 }
 

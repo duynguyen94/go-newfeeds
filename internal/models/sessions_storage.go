@@ -2,7 +2,8 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/duynguyen94/go-newfeeds/pkg/conn"
+	"github.com/duynguyen94/go-newfeeds/internal/conn"
+	"github.com/duynguyen94/go-newfeeds/internal/payloads"
 	"github.com/go-redis/redis"
 	"log"
 )
@@ -11,7 +12,7 @@ type SessionModel struct {
 	Client *redis.Client
 }
 
-func (s *SessionModel) createCookie(user *UserRecord) map[string]string {
+func (s *SessionModel) createCookie(user *payloads.UserRecord) map[string]string {
 	return map[string]string{
 		"username": user.UserName,
 		"password": user.Password,
@@ -22,7 +23,7 @@ func (s *SessionModel) createKey(userName string) string {
 	return userName + "-session"
 }
 
-func (s *SessionModel) WriteSession(userName string, user *UserRecord) error {
+func (s *SessionModel) WriteSession(userName string, user *payloads.UserRecord) error {
 	// Errors should be handled here
 	key := s.createKey(userName)
 	value := s.createCookie(user)
