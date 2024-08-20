@@ -1,4 +1,4 @@
-package main
+package async
 
 import (
 	"encoding/json"
@@ -17,9 +17,9 @@ type newsfeedTaskPayload struct {
 }
 
 type TaskProcessor struct {
-	client *asynq.Client
-	users  models.UserDBModel
-	posts  models.PostCacheModel
+	Client *asynq.Client
+	Users  models.UserDBModel
+	Posts  models.PostCacheModel
 }
 
 func (processor *TaskProcessor) GenNewsfeedTasks(userId int) (*asynq.Task, error) {
@@ -33,13 +33,13 @@ func (processor *TaskProcessor) GenNewsfeedTasks(userId int) (*asynq.Task, error
 }
 
 func (processor *TaskProcessor) GenNewsfeed(userId int) error {
-	userPosts, err := processor.users.ViewPosts(userId)
+	userPosts, err := processor.Users.ViewPosts(userId)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	friendPosts, err := processor.users.ViewFriendPost(userId)
+	friendPosts, err := processor.Users.ViewFriendPost(userId)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -47,7 +47,7 @@ func (processor *TaskProcessor) GenNewsfeed(userId int) error {
 
 	userPosts = append(userPosts, friendPosts...)
 
-	err = processor.posts.WritePost(userId, userPosts)
+	err = processor.Posts.WritePost(userId, userPosts)
 	if err != nil {
 		log.Println(err)
 		return err

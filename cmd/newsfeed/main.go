@@ -1,75 +1,15 @@
 package main
 
 import (
-	repo2 "github.com/duynguyen94/go-newfeeds/pkg/conn"
+	"github.com/duynguyen94/go-newfeeds/internal/async"
+	"github.com/duynguyen94/go-newfeeds/internal/services"
+	"github.com/duynguyen94/go-newfeeds/pkg/conn"
 	"github.com/duynguyen94/go-newfeeds/pkg/models"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
-	"strconv"
 )
-
-type App struct {
-	users        models.UserDBModel
-	posts        models.PostCacheModel
-	imageStorage models.ImagePostStorageModel
-	tasks        TaskProcessor
-}
-
-func (app *App) GetNewsfeedsHandler(c *gin.Context) {
-	userId, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "err: " + err.Error(),
-		})
-		return
-	}
-
-	posts, err := app.posts.ReadPost(userId)
-
-	if err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "err: " + err.Error(),
-		})
-		return
-	}
-
-	// TODO Gen downloadable image url
-	// Client might retries several time before newsfeed appear
-	c.JSON(http.StatusOK, gin.H{
-		"posts": posts,
-	})
-	return
-}
-
-func (app *App) GenNewsfeedHandler(c *gin.Context) {
-	userId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "err: " + err.Error(),
-		})
-		return
-	}
-
-	err = app.tasks.GenNewsfeed(userId)
-	if err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "err: " + err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Queued task",
-	})
-
-}
 
 func main() {
 	log.Println("Starting newsfeed services")
@@ -78,39 +18,39 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := repo2.InitMySQLDBConn()
+	db, err := conn.InitMySQLDBConn()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cacheClient, err := repo2.CreateRedisClient()
+	cacheClient, err := conn.CreateRedisClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	minIOClient, err := repo2.CreateMinioClient()
+	minIOClient, err := conn.CreateMinioClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	asyncqClient, err := repo2.CreateAsyncQClient()
+	asyncqClient, err := conn.CreateAsyncQClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	app := &App{
-		users:        models.UserDBModel{DB: db},
-		posts:        models.PostCacheModel{Client: cacheClient},
-		imageStorage: models.ImagePostStorageModel{Client: minIOClient, Bucket: models.DefaultBucket},
-		tasks: TaskProcessor{
-			client: asyncqClient,
-			users:  models.UserDBModel{DB: db},
-			posts:  models.PostCacheModel{Client: cacheClient},
+	app := &services.NewsfeedServices{
+		Users:        models.UserDBModel{DB: db},
+		Posts:        models.PostCacheModel{Client: cacheClient},
+		ImageStorage: models.ImagePostStorageModel{Client: minIOClient, Bucket: models.DefaultBucket},
+		Tasks: async.TaskProcessor{
+			Client: asyncqClient,
+			Users:  models.UserDBModel{DB: db},
+			Posts:  models.PostCacheModel{Client: cacheClient},
 		},
 	}
 
 	// Simple ping
-	err = app.imageStorage.BucketExists()
+	err = app.ImageStorage.BucketExists()
 	if err != nil {
 		log.Fatal(err)
 	}
