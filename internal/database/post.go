@@ -26,6 +26,9 @@ type PostDB interface {
 
 	// ListPostByUserId load post from given user-id
 	ListPostByUserId(userId int) ([]payloads.PostPayload, error)
+
+	// UpdateImagePath overwrite image path for given post
+	UpdateImagePath(postId int, imagePath string) error
 }
 
 func NewPostDB(db *sql.DB) PostDB {
@@ -34,11 +37,6 @@ func NewPostDB(db *sql.DB) PostDB {
 
 type postDB struct {
 	db *sql.DB
-}
-
-func (m *postDB) ListPostByUserId(userId int) ([]payloads.PostPayload, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (m *postDB) GetPostById(id int) (payloads.PostPayload, error) {
@@ -164,7 +162,7 @@ func (m *postDB) Like(postId int, userId int) error {
 	return err
 }
 
-func (m *userDB) ListPostByUserId(userId int) ([]payloads.PostPayload, error) {
+func (m *postDB) ListPostByUserId(userId int) ([]payloads.PostPayload, error) {
 	var posts []payloads.PostPayload
 
 	stmtOut, err := m.db.Prepare("SELECT id, content_text, IFNULL(content_image_path, '') AS content_image_path, created_at FROM `user_user` u_u LEFT JOIN `post` p ON u_u.fk_follower_id = p.fk_user_id WHERE u_u.fk_user_id = ? AND visible = 1")
