@@ -36,12 +36,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Simple ping
-	//err = env.images.BucketExists()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-
 	r := gin.Default()
 	r.MaxMultipartMemory = 8 << 20 // Max 8MB
 
@@ -55,7 +49,13 @@ func main() {
 	sessionCache := cache.NewSessionCache(cacheClient)
 	postDB := database.NewPostDB(db)
 	userDB := database.NewUserDB(db)
-	imageStorage := object_store.NewImageStorage(minIOClient)
+	imageStorage := object_store.NewImageStorage(minIOClient, "images")
+
+	// Simple ping
+	err = imageStorage.BucketExists()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	userHandler := user.NewHandler(userDB, sessionCache)
 	user.RouteV1(userHandler, r)

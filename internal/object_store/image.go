@@ -14,27 +14,27 @@ import (
 type ImageStorage interface {
 
 	// BucketExists simple ping for check connection and bucket exised
-	BucketExists(bucketName string) error
+	BucketExists() error
 
 	// Put upload image to blob store
 	Put(reader *os.File, postId int, filename string, fileSize int64) (string, error)
 
 	// GetSignedUrl get downloadable url for given image
-	GetSignedUrl(bucketName string, path string, expiration time.Duration) (string, error)
+	GetSignedUrl(path string, expiration time.Duration) (string, error)
 }
 
-func NewImageStorage(client *minio.Client) ImageStorage {
-	return &imagePostStorage{client: client}
+func NewImageStorage(client *minio.Client, bucket string) ImageStorage {
+	return &imagePostStorage{client: client, bucket: bucket}
 }
 
 type imagePostStorage struct {
 	client *minio.Client
-	Bucket string
+	bucket string
 }
 
-func (s *imagePostStorage) BucketExists(bucketName string) error {
+func (s *imagePostStorage) BucketExists() error {
 	ctx := context.Background()
-	exists, errBucketExists := s.client.BucketExists(ctx, bucketName)
+	exists, errBucketExists := s.client.BucketExists(ctx, s.bucket)
 
 	if errBucketExists != nil {
 		return errBucketExists
@@ -56,7 +56,7 @@ func (s *imagePostStorage) Put(reader *os.File, postId int, filename string, fil
 	objectKey := s.getKey(postId, filename)
 
 	info, err := s.client.PutObject(
-		context.Background(), s.Bucket, objectKey,
+		context.Background(), s.bucket, objectKey,
 		reader, fileSize, minio.PutObjectOptions{},
 	)
 
@@ -67,11 +67,11 @@ func (s *imagePostStorage) Put(reader *os.File, postId int, filename string, fil
 	return info.Key, nil
 }
 
-func (s *imagePostStorage) GetSignedUrl(bucketName string, path string, expiration time.Duration) (string, error) {
+func (s *imagePostStorage) GetSignedUrl(path string, expiration time.Duration) (string, error) {
 	reqParams := make(url.Values)
 
 	presignedURL, err := s.client.PresignedGetObject(
-		context.Background(), s.Bucket, path,
+		context.Background(), s.bucket, path,
 		expiration, reqParams,
 	)
 	if err != nil {
