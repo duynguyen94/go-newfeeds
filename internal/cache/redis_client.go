@@ -1,4 +1,4 @@
-package conn
+package cache
 
 import (
 	"github.com/go-redis/redis"
