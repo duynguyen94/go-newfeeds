@@ -1,4 +1,4 @@
-package conn
+package object_store
 
 import (
 	"github.com/minio/minio-go/v7"
