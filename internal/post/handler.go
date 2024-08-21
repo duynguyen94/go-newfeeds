@@ -187,7 +187,7 @@ func (app *Handler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	//err = app.postDB.(postId, imagePath)
+	err = app.postDB.UpdateImagePath(postId, imagePath)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
