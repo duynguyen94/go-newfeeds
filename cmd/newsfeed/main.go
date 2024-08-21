@@ -44,8 +44,8 @@ func main() {
 	postCache := cache.NewPostCache(cacheClient)
 	postDB := database.NewPostDB(db)
 	userDB := database.NewUserDB(db)
-
 	asyncTask := async.NewNewsfeedAsync(asyncqClient, postDB, userDB, postCache)
+
 	newsfeedHandler := newsfeed.NewHandler(postCache, asyncTask)
 	newsfeed.RouteV1(newsfeedHandler, r)
 
