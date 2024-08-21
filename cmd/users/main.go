@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"github.com/duynguyen94/go-newfeeds/internal/cache"
 	"github.com/duynguyen94/go-newfeeds/internal/conn"
+	"github.com/duynguyen94/go-newfeeds/internal/database"
 	models2 "github.com/duynguyen94/go-newfeeds/internal/models"
 	"github.com/duynguyen94/go-newfeeds/internal/payloads"
 	"github.com/gin-gonic/gin"
@@ -621,12 +623,12 @@ func main() {
 
 	// Setup shared connection,
 	// follow https://www.alexedwards.net/blog/organising-database-access
-	db, err := conn.InitMySQLDBConn()
+	db, err := database.InitMySQLDBConn()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cacheClient, err := conn.CreateRedisClient()
+	cacheClient, err := cache.CreateRedisClient()
 	if err != nil {
 		log.Fatal(err)
 	}

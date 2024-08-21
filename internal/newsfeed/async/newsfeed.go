@@ -2,7 +2,8 @@ package async
 
 import (
 	"encoding/json"
-	models2 "github.com/duynguyen94/go-newfeeds/internal/models"
+	"github.com/duynguyen94/go-newfeeds/internal/cache"
+	"github.com/duynguyen94/go-newfeeds/internal/database"
 	"github.com/hibiken/asynq"
 	"log"
 	"time"
@@ -17,9 +18,10 @@ type newsfeedTaskPayload struct {
 }
 
 type TaskProcessor struct {
-	Client *asynq.Client
-	Users  models2.UserDBModel
-	Posts  models2.PostCacheModel
+	client    *asynq.Client
+	postDB    database.PostDB
+	userDB    database.UserDB
+	postCache cache.PostCache
 }
 
 func (processor *TaskProcessor) GenNewsfeedTasks(userId int) (*asynq.Task, error) {
@@ -33,21 +35,22 @@ func (processor *TaskProcessor) GenNewsfeedTasks(userId int) (*asynq.Task, error
 }
 
 func (processor *TaskProcessor) GenNewsfeed(userId int) error {
-	userPosts, err := processor.Users.ViewPosts(userId)
+	userPosts, err := processor.postDB.ListPostByUserId(userId)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	friendPosts, err := processor.Users.ViewFriendPost(userId)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
+	// TODO list post by follower
+	//friendPosts, err := processor.Users.ViewFriendPost(userId)
+	//if err != nil {
+	//	log.Println(err)
+	//	return err
+	//}
+	//
+	//userPosts = append(userPosts, friendPosts...)
 
-	userPosts = append(userPosts, friendPosts...)
-
-	err = processor.Posts.WritePost(userId, userPosts)
+	err = processor.postCache.WritePosts(userId, userPosts)
 	if err != nil {
 		log.Println(err)
 		return err
