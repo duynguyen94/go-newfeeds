@@ -9,12 +9,12 @@ import (
 	"strconv"
 )
 
-type NewsfeedHandler struct {
+type Handler struct {
 	postCache cache.PostCache
-	asyncTask async.TaskProcessor
+	asyncTask async.NewsfeedAsync
 }
 
-func (app *NewsfeedHandler) GetNewsfeeds(c *gin.Context) {
+func (app *Handler) GetNewsfeeds(c *gin.Context) {
 	// TODO Get userId from cookies
 	userId, err := strconv.Atoi(c.Param("id"))
 
@@ -44,7 +44,7 @@ func (app *NewsfeedHandler) GetNewsfeeds(c *gin.Context) {
 	return
 }
 
-func (app *NewsfeedHandler) GenNewsfeed(c *gin.Context) {
+func (app *Handler) GenNewsfeed(c *gin.Context) {
 	userId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println(err.Error())
@@ -54,7 +54,7 @@ func (app *NewsfeedHandler) GenNewsfeed(c *gin.Context) {
 		return
 	}
 
-	err = app.asyncTask.GenNewsfeed(userId)
+	err = app.asyncTask.Generate(userId)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -70,7 +70,7 @@ func (app *NewsfeedHandler) GenNewsfeed(c *gin.Context) {
 }
 
 // RouteV1 Route for newsfeed service
-func RouteV1(h *NewsfeedHandler, r *gin.Engine) {
+func RouteV1(h *Handler, r *gin.Engine) {
 	v1 := r.Group("v1")
 	v1.Use()
 	{
@@ -79,8 +79,8 @@ func RouteV1(h *NewsfeedHandler, r *gin.Engine) {
 	}
 }
 
-func NewHandler(postCache cache.PostCache, taskProcessor async.TaskProcessor) *NewsfeedHandler {
-	return &NewsfeedHandler{
+func NewHandler(postCache cache.PostCache, taskProcessor async.NewsfeedAsync) *Handler {
+	return &Handler{
 		postCache: postCache,
 		asyncTask: taskProcessor,
 	}

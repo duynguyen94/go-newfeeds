@@ -17,14 +17,27 @@ type newsfeedTaskPayload struct {
 	userId int
 }
 
-type TaskProcessor struct {
+type NewsfeedAsync interface {
+
+	// CreateTask convert userId into task payload
+	CreateTask(userId int) (*asynq.Task, error)
+
+	// Generate newfeed for given userId
+	Generate(userId int) error
+}
+
+func NewNewsfeedAsync(client *asynq.Client, postDB database.PostDB, userDB database.UserDB, postCache cache.PostCache) NewsfeedAsync {
+	return &taskProcessor{client: client, postDB: postDB, userDB: userDB, postCache: postCache}
+}
+
+type taskProcessor struct {
 	client    *asynq.Client
 	postDB    database.PostDB
 	userDB    database.UserDB
 	postCache cache.PostCache
 }
 
-func (processor *TaskProcessor) GenNewsfeedTasks(userId int) (*asynq.Task, error) {
+func (processor *taskProcessor) CreateTask(userId int) (*asynq.Task, error) {
 	payload, err := json.Marshal(newsfeedTaskPayload{userId: userId})
 	if err != nil {
 		return nil, err
@@ -34,7 +47,7 @@ func (processor *TaskProcessor) GenNewsfeedTasks(userId int) (*asynq.Task, error
 	return task, nil
 }
 
-func (processor *TaskProcessor) GenNewsfeed(userId int) error {
+func (processor *taskProcessor) Generate(userId int) error {
 	userPosts, err := processor.postDB.ListPostByUserId(userId)
 	if err != nil {
 		log.Println(err)

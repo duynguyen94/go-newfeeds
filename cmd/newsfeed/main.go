@@ -4,9 +4,9 @@ import (
 	"github.com/duynguyen94/go-newfeeds/internal/cache"
 	"github.com/duynguyen94/go-newfeeds/internal/conn"
 	"github.com/duynguyen94/go-newfeeds/internal/database"
-	models2 "github.com/duynguyen94/go-newfeeds/internal/models"
 	"github.com/duynguyen94/go-newfeeds/internal/newsfeed"
 	"github.com/duynguyen94/go-newfeeds/internal/newsfeed/async"
+	"github.com/duynguyen94/go-newfeeds/internal/object_store"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
@@ -30,7 +30,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = conn.CreateMinioClient()
+	_, err = object_store.CreateMinioClient()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,12 +41,11 @@ func main() {
 	}
 
 	r := gin.Default()
-	postCache := cache.PostCacheModel{Client: cacheClient}
-	asyncTask := async.TaskProcessor{
-		Client: asyncqClient,
-		Users:  models2.UserDBModel{DB: db},
-		Posts:  cache.PostCacheModel{Client: cacheClient},
-	}
+	postCache := cache.NewPostCache(cacheClient)
+	postDB := database.NewPostDB(db)
+	userDB := database.NewUserDB(db)
+
+	asyncTask := async.NewNewsfeedAsync(asyncqClient, postDB, userDB, postCache)
 	newsfeedHandler := newsfeed.NewHandler(postCache, asyncTask)
 	newsfeed.RouteV1(newsfeedHandler, r)
 
