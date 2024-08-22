@@ -284,7 +284,7 @@ func main() {
 			posts = append(posts, []interface{}{userID, contentText, contentImagePath})
 		}
 		postInsertWg.Add(1)
-		go insertPosts(posts)
+		insertPosts(posts)
 	}
 	postInsertWg.Wait()
 
