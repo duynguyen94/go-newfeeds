@@ -18,12 +18,13 @@ import (
 )
 
 const (
-	totalUsers   = 10000000
-	avgFollows   = 200
-	topUsers     = 10
-	topFollows   = 100000
-	batchSize    = 1000
-	postsPerUser = 5
+	totalUsers             = 10000000
+	avgFollows             = 200
+	topUsers               = 10
+	topFollows             = 100000
+	batchSize              = 1000
+	postsPerUser           = 5
+	postingUsersPercentage = 0.1
 )
 
 // User represents a user in the database
@@ -35,13 +36,6 @@ type User struct {
 	Dob            string
 	Email          string
 	UserName       string
-}
-
-// Post represents a post in the database
-type Post struct {
-	UserID           int
-	ContentText      string
-	ContentImagePath string
 }
 
 func randomString(n int) string {
@@ -94,15 +88,10 @@ func generateUser(id int) User {
 	}
 }
 
-func generatePost(userID int) Post {
-	contentText := fmt.Sprintf("This is a sample post content for user %d.", userID)
-	contentImagePath := fmt.Sprintf("/images/user%d/post%d.jpg", userID, randInt(1, 5))
-
-	return Post{
-		UserID:           userID,
-		ContentText:      contentText,
-		ContentImagePath: contentImagePath,
-	}
+func generatePost(userID int) (string, string) {
+	contentText := randomString(100)
+	contentImagePath := fmt.Sprintf("/images/%d/%s.jpg", userID, randomString(10))
+	return contentText, contentImagePath
 }
 
 func insertUsers(db *sql.DB, users []User) {
@@ -130,24 +119,27 @@ func insertUsers(db *sql.DB, users []User) {
 	}
 }
 
-func insertPosts(db *sql.DB, posts []Post) {
+func insertPosts(db *sql.DB, posts [][]interface{}) {
 	var queryBuilder strings.Builder
 	queryBuilder.WriteString("INSERT INTO `post` (fk_user_id, content_text, content_image_path) VALUES ")
 
-	vals := []interface{}{}
-
-	for _, post := range posts {
+	for _ = range posts {
 		queryBuilder.WriteString("(?, ?, ?),")
-		vals = append(vals, post.UserID, post.ContentText, post.ContentImagePath)
 	}
 
 	// Trim the last comma
 	query := strings.TrimSuffix(queryBuilder.String(), ",")
+
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
+
+	vals := []interface{}{}
+	for _, post := range posts {
+		vals = append(vals, post...)
+	}
 
 	_, err = stmt.Exec(vals...)
 	if err != nil {
@@ -245,22 +237,32 @@ func main() {
 	}
 	defer db.Close()
 
-	// Step 1: Generate and insert users along with their posts
+	// Step 1: Generate and insert users
+	var usersToPost []int // Track users that will have posts
 	for i := 0; i < totalUsers/batchSize; i++ {
 		var users []User
-		var posts []Post
 		for j := 0; j < batchSize; j++ {
-			id := i*batchSize + j + 1 // IDs are 1-based
+			id := i*batchSize + j
 			users = append(users, generateUser(id))
-			for k := 0; k < postsPerUser; k++ {
-				posts = append(posts, generatePost(id))
+			// Randomly select 10% of users to have posts
+			if mathrand.Float64() < postingUsersPercentage {
+				usersToPost = append(usersToPost, id)
 			}
 		}
 		insertUsers(db, users)
-		insertPosts(db, posts)
-		fmt.Printf("Inserted %d users with %d posts\n", (i+1)*batchSize, (i+1)*batchSize*postsPerUser)
+		fmt.Printf("Inserted %d users\n", (i+1)*batchSize)
 	}
 
-	// Step 2: Generate followers after users have been seeded
+	// Step 2: Generate and insert posts for selected users
+	for _, userID := range usersToPost {
+		var posts [][]interface{}
+		for k := 0; k < postsPerUser; k++ {
+			contentText, contentImagePath := generatePost(userID)
+			posts = append(posts, []interface{}{userID, contentText, contentImagePath})
+		}
+		insertPosts(db, posts)
+	}
+
+	// Step 3: Generate followers after users have been seeded
 	generateFollowers(db)
 }
