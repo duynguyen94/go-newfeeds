@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	totalUsers             = 10_000_000
+	totalUsers             = 1_000_000
 	avgFollows             = 200
 	topUsers               = 10
-	topFollows             = 100_000
+	topFollows             = 10_000
 	batchSize              = 1_000
 	postsPerUser           = 5
 	postingUsersPercentage = 0.1
