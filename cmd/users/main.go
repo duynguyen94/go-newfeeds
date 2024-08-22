@@ -6,6 +6,7 @@ import (
 	"github.com/duynguyen94/go-newfeeds/internal/object_store"
 	"github.com/duynguyen94/go-newfeeds/internal/post"
 	"github.com/duynguyen94/go-newfeeds/internal/user"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
@@ -63,5 +64,7 @@ func main() {
 	postHandler := post.NewHandler(postDB, imageStorage)
 	post.RouteV1(postHandler, r)
 
+	// Performance stats
+	pprof.Register(r)
 	r.Run()
 }
