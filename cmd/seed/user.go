@@ -25,6 +25,8 @@ const (
 	postsPerUser           = 5
 	postingUsersPercentage = 0.1
 	maxConcurrentInserts   = 5
+	maxOpenConns           = 10
+	maxIdleConns           = 5
 )
 
 var (
@@ -249,6 +251,10 @@ func main() {
 	}
 	defer db.Close()
 
+	// Set maximum open and idle connections to avoid "too many connections" error
+	db.SetMaxOpenConns(maxOpenConns)
+	db.SetMaxIdleConns(maxIdleConns)
+
 	// Step 1: Generate and insert users
 	var usersToPost []int // Track users that will have posts
 	for i := 0; i < totalUsers/batchSize; i++ {
@@ -277,7 +283,4 @@ func main() {
 		go insertPosts(posts)
 	}
 	postInsertWg.Wait()
-
-	// Step 3: Generate followers after users have been seeded
-	generateFollowers()
 }
