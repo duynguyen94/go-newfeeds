@@ -1,16 +1,15 @@
 package main
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"log"
-	"math/big"
 	mathrand "math/rand"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -27,7 +26,13 @@ const (
 	postingUsersPercentage = 0.1
 )
 
-// User represents a user in the database
+var (
+	db           *sql.DB
+	randomGen    *mathrand.Rand
+	insertWg     sync.WaitGroup
+	postInsertWg sync.WaitGroup
+)
+
 type User struct {
 	HashedPassword string
 	Salt           string
@@ -38,12 +43,16 @@ type User struct {
 	UserName       string
 }
 
+func init() {
+	randomGen = mathrand.New(mathrand.NewSource(time.Now().UnixNano()))
+}
+
 func randomString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	result := make([]byte, n)
 	for i := range result {
-		num, _ := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
-		result[i] = letters[num.Int64()]
+		num := randomGen.Intn(len(letters))
+		result[i] = letters[num]
 	}
 	return string(result)
 }
@@ -58,13 +67,8 @@ func randomDate() string {
 	min := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
 	max := time.Date(2000, 12, 31, 0, 0, 0, 0, time.UTC).Unix()
 
-	sec := randInt(min, max)
+	sec := randomGen.Int63n(max-min) + min
 	return time.Unix(sec, 0).Format("2006-01-02")
-}
-
-func randInt(min, max int64) int64 {
-	n, _ := rand.Int(rand.Reader, big.NewInt(max-min))
-	return min + n.Int64()
 }
 
 func generateUser(id int) User {
@@ -94,18 +98,18 @@ func generatePost(userID int) (string, string) {
 	return contentText, contentImagePath
 }
 
-func insertUsers(db *sql.DB, users []User) {
+func insertUsers(users []User) {
+	defer insertWg.Done()
 	var queryBuilder strings.Builder
 	queryBuilder.WriteString("INSERT INTO `user` (hashed_password, salt, first_name, last_name, dob, email, user_name) VALUES ")
 
-	vals := []interface{}{}
+	vals := make([]interface{}, 0, batchSize*7)
 
 	for _, user := range users {
 		queryBuilder.WriteString("(?, ?, ?, ?, ?, ?, ?),")
 		vals = append(vals, user.HashedPassword, user.Salt, user.FirstName, user.LastName, user.Dob, user.Email, user.UserName)
 	}
 
-	// Trim the last comma
 	query := strings.TrimSuffix(queryBuilder.String(), ",")
 	stmt, err := db.Prepare(query)
 	if err != nil {
@@ -119,27 +123,24 @@ func insertUsers(db *sql.DB, users []User) {
 	}
 }
 
-func insertPosts(db *sql.DB, posts [][]interface{}) {
+func insertPosts(posts [][]interface{}) {
+	defer postInsertWg.Done()
 	var queryBuilder strings.Builder
 	queryBuilder.WriteString("INSERT INTO `post` (fk_user_id, content_text, content_image_path) VALUES ")
 
-	for _ = range posts {
+	vals := make([]interface{}, 0, len(posts)*3)
+
+	for _, post := range posts {
 		queryBuilder.WriteString("(?, ?, ?),")
+		vals = append(vals, post...)
 	}
 
-	// Trim the last comma
 	query := strings.TrimSuffix(queryBuilder.String(), ",")
-
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
-
-	vals := []interface{}{}
-	for _, post := range posts {
-		vals = append(vals, post...)
-	}
 
 	_, err = stmt.Exec(vals...)
 	if err != nil {
@@ -147,7 +148,7 @@ func insertPosts(db *sql.DB, posts [][]interface{}) {
 	}
 }
 
-func generateFollowers(db *sql.DB) {
+func generateFollowers() {
 	mathrand.Seed(time.Now().UnixNano())
 
 	// Insert followers in batches
@@ -163,7 +164,7 @@ func generateFollowers(db *sql.DB) {
 				batch = append(batch, "(?, ?)")
 				vals = append(vals, userID, followerID+1)
 				if len(batch) >= batchSize {
-					insertBatchFollowers(db, batch, vals)
+					insertBatchFollowers(batch, vals)
 					batch = []string{}
 					vals = []interface{}{}
 				}
@@ -173,19 +174,19 @@ func generateFollowers(db *sql.DB) {
 
 	// Insert any remaining followers
 	if len(batch) > 0 {
-		insertBatchFollowers(db, batch, vals)
+		insertBatchFollowers(batch, vals)
 	}
 
 	// Assign an average of 200 followers to the rest of the users
 	for userID := topUsers + 1; userID <= totalUsers; userID++ {
-		numFollows := mathrand.Intn(avgFollows * 2) // To vary the number of follows per user around the average
+		numFollows := randomGen.Intn(avgFollows * 2) // To vary the number of follows per user around the average
 		followers := mathrand.Perm(totalUsers)[:numFollows]
 		for _, followerID := range followers {
 			if followerID+1 != userID { // Ensure a user does not follow themselves
 				batch = append(batch, "(?, ?)")
 				vals = append(vals, userID, followerID+1)
 				if len(batch) >= batchSize {
-					insertBatchFollowers(db, batch, vals)
+					insertBatchFollowers(batch, vals)
 					batch = []string{}
 					vals = []interface{}{}
 				}
@@ -198,11 +199,11 @@ func generateFollowers(db *sql.DB) {
 
 	// Insert any remaining followers
 	if len(batch) > 0 {
-		insertBatchFollowers(db, batch, vals)
+		insertBatchFollowers(batch, vals)
 	}
 }
 
-func insertBatchFollowers(db *sql.DB, batch []string, vals []interface{}) {
+func insertBatchFollowers(batch []string, vals []interface{}) {
 	query := "INSERT IGNORE INTO `user_user` (fk_user_id, fk_follower_id) VALUES " + strings.Join(batch, ",")
 	stmt, err := db.Prepare(query)
 	if err != nil {
@@ -231,7 +232,7 @@ func main() {
 		os.Getenv("MYSQL_PORT"),
 		os.Getenv("MYSQL_DATABASE"))
 
-	db, err := sql.Open("mysql", dsn)
+	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -240,29 +241,32 @@ func main() {
 	// Step 1: Generate and insert users
 	var usersToPost []int // Track users that will have posts
 	for i := 0; i < totalUsers/batchSize; i++ {
-		var users []User
+		users := make([]User, 0, batchSize)
 		for j := 0; j < batchSize; j++ {
 			id := i*batchSize + j
 			users = append(users, generateUser(id))
 			// Randomly select 10% of users to have posts
-			if mathrand.Float64() < postingUsersPercentage {
+			if randomGen.Float64() < postingUsersPercentage {
 				usersToPost = append(usersToPost, id)
 			}
 		}
-		insertUsers(db, users)
-		fmt.Printf("Inserted %d users\n", (i+1)*batchSize)
+		insertWg.Add(1)
+		go insertUsers(users)
 	}
+	insertWg.Wait()
 
 	// Step 2: Generate and insert posts for selected users
 	for _, userID := range usersToPost {
-		var posts [][]interface{}
+		posts := make([][]interface{}, 0, postsPerUser)
 		for k := 0; k < postsPerUser; k++ {
 			contentText, contentImagePath := generatePost(userID)
 			posts = append(posts, []interface{}{userID, contentText, contentImagePath})
 		}
-		insertPosts(db, posts)
+		postInsertWg.Add(1)
+		go insertPosts(posts)
 	}
+	postInsertWg.Wait()
 
 	// Step 3: Generate followers after users have been seeded
-	generateFollowers(db)
+	generateFollowers()
 }
