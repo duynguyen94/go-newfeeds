@@ -4,6 +4,8 @@ FROM golang:1.22-alpine
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
+RUN go mod tidy
+
 # Copy go.mod and go.sum files to the workspace
 COPY go.mod go.sum ./
 
