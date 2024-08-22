@@ -22,7 +22,7 @@ const (
 	avgFollows             = 200
 	topUsers               = 10
 	topFollows             = 100000
-	batchSize              = 50000
+	batchSize              = 10000
 	postsPerUser           = 5
 	postingUsersPercentage = 0.1
 )
