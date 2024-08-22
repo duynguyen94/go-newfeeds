@@ -18,11 +18,12 @@ import (
 )
 
 const (
-	totalUsers = 10000000
-	avgFollows = 200
-	topUsers   = 10
-	topFollows = 100000
-	batchSize  = 1000
+	totalUsers   = 10000000
+	avgFollows   = 200
+	topUsers     = 10
+	topFollows   = 100000
+	batchSize    = 1000
+	postsPerUser = 5
 )
 
 // User represents a user in the database
@@ -34,6 +35,13 @@ type User struct {
 	Dob            string
 	Email          string
 	UserName       string
+}
+
+// Post represents a post in the database
+type Post struct {
+	UserID           int
+	ContentText      string
+	ContentImagePath string
 }
 
 func randomString(n int) string {
@@ -86,6 +94,17 @@ func generateUser(id int) User {
 	}
 }
 
+func generatePost(userID int) Post {
+	contentText := fmt.Sprintf("This is a sample post content for user %d.", userID)
+	contentImagePath := fmt.Sprintf("/images/user%d/post%d.jpg", userID, randInt(1, 5))
+
+	return Post{
+		UserID:           userID,
+		ContentText:      contentText,
+		ContentImagePath: contentImagePath,
+	}
+}
+
 func insertUsers(db *sql.DB, users []User) {
 	var queryBuilder strings.Builder
 	queryBuilder.WriteString("INSERT INTO `user` (hashed_password, salt, first_name, last_name, dob, email, user_name) VALUES ")
@@ -95,6 +114,31 @@ func insertUsers(db *sql.DB, users []User) {
 	for _, user := range users {
 		queryBuilder.WriteString("(?, ?, ?, ?, ?, ?, ?),")
 		vals = append(vals, user.HashedPassword, user.Salt, user.FirstName, user.LastName, user.Dob, user.Email, user.UserName)
+	}
+
+	// Trim the last comma
+	query := strings.TrimSuffix(queryBuilder.String(), ",")
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(vals...)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func insertPosts(db *sql.DB, posts []Post) {
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString("INSERT INTO `post` (fk_user_id, content_text, content_image_path) VALUES ")
+
+	vals := []interface{}{}
+
+	for _, post := range posts {
+		queryBuilder.WriteString("(?, ?, ?),")
+		vals = append(vals, post.UserID, post.ContentText, post.ContentImagePath)
 	}
 
 	// Trim the last comma
@@ -201,15 +245,20 @@ func main() {
 	}
 	defer db.Close()
 
-	// Step 1: Generate and insert users
+	// Step 1: Generate and insert users along with their posts
 	for i := 0; i < totalUsers/batchSize; i++ {
 		var users []User
+		var posts []Post
 		for j := 0; j < batchSize; j++ {
-			id := i*batchSize + j
+			id := i*batchSize + j + 1 // IDs are 1-based
 			users = append(users, generateUser(id))
+			for k := 0; k < postsPerUser; k++ {
+				posts = append(posts, generatePost(id))
+			}
 		}
 		insertUsers(db, users)
-		fmt.Printf("Inserted %d users\n", (i+1)*batchSize)
+		insertPosts(db, posts)
+		fmt.Printf("Inserted %d users with %d posts\n", (i+1)*batchSize, (i+1)*batchSize*postsPerUser)
 	}
 
 	// Step 2: Generate followers after users have been seeded
