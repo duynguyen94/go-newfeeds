@@ -24,6 +24,7 @@ const (
 	batchSize              = 1000
 	postsPerUser           = 5
 	postingUsersPercentage = 0.1
+	maxConcurrentInserts   = 5
 )
 
 var (
@@ -31,6 +32,7 @@ var (
 	randomGen    *mathrand.Rand
 	insertWg     sync.WaitGroup
 	postInsertWg sync.WaitGroup
+	insertSem    chan struct{}
 )
 
 type User struct {
@@ -45,6 +47,7 @@ type User struct {
 
 func init() {
 	randomGen = mathrand.New(mathrand.NewSource(time.Now().UnixNano()))
+	insertSem = make(chan struct{}, maxConcurrentInserts)
 }
 
 func randomString(n int) string {
@@ -100,6 +103,8 @@ func generatePost(userID int) (string, string) {
 
 func insertUsers(users []User) {
 	defer insertWg.Done()
+	insertSem <- struct{}{} // Acquire semaphore
+
 	var queryBuilder strings.Builder
 	queryBuilder.WriteString("INSERT INTO `user` (hashed_password, salt, first_name, last_name, dob, email, user_name) VALUES ")
 
@@ -121,10 +126,14 @@ func insertUsers(users []User) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	<-insertSem // Release semaphore
 }
 
 func insertPosts(posts [][]interface{}) {
 	defer postInsertWg.Done()
+	insertSem <- struct{}{} // Acquire semaphore
+
 	var queryBuilder strings.Builder
 	queryBuilder.WriteString("INSERT INTO `post` (fk_user_id, content_text, content_image_path) VALUES ")
 
@@ -146,6 +155,8 @@ func insertPosts(posts [][]interface{}) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	<-insertSem // Release semaphore
 }
 
 func generateFollowers() {
