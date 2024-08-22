@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	totalUsers = 10000
+	totalUsers = 10000000
 	avgFollows = 200
 	topUsers   = 10
-	topFollows = 1000
+	topFollows = 100000
 	batchSize  = 1000
 )
 
