@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	totalUsers             = 10000000
+	totalUsers             = 10_000_000
 	avgFollows             = 200
 	topUsers               = 10
-	topFollows             = 100000
-	batchSize              = 1000
+	topFollows             = 100_000
+	batchSize              = 1_000
 	postsPerUser           = 5
 	postingUsersPercentage = 0.1
 	maxConcurrentInserts   = 5
@@ -130,6 +130,7 @@ func insertUsers(users []User) {
 	}
 
 	<-insertSem // Release semaphore
+	fmt.Printf("Inserted %d users\n", len(users))
 }
 
 func insertPosts(posts [][]interface{}) {
@@ -159,6 +160,7 @@ func insertPosts(posts [][]interface{}) {
 	}
 
 	<-insertSem // Release semaphore
+	fmt.Printf("Inserted %d posts\n", len(posts))
 }
 
 func generateFollowers() {
@@ -183,6 +185,7 @@ func generateFollowers() {
 				}
 			}
 		}
+		fmt.Printf("User %d assigned %d followers\n", userID, topFollows)
 	}
 
 	// Insert any remaining followers
@@ -206,7 +209,7 @@ func generateFollowers() {
 			}
 		}
 		if userID%1000 == 0 {
-			fmt.Printf("Processed %d users\n", userID)
+			fmt.Printf("Processed %d users for followers\n", userID)
 		}
 	}
 
@@ -228,6 +231,7 @@ func insertBatchFollowers(batch []string, vals []interface{}) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("Inserted %d follower pairs\n", len(batch))
 }
 
 func main() {
@@ -283,4 +287,7 @@ func main() {
 		go insertPosts(posts)
 	}
 	postInsertWg.Wait()
+
+	// Step 3: Generate followers after users have been seeded
+	generateFollowers()
 }
