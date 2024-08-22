@@ -27,6 +27,9 @@ type PostDB interface {
 	// ListPostByUserId load post from given user-id
 	ListPostByUserId(userId int) ([]payloads.PostPayload, error)
 
+	// ListPostByUserIdAndFollower return all post of current user-id and follower
+	ListPostByUserIdAndFollower(userId int) ([]payloads.PostPayload, error)
+
 	// UpdateImagePath overwrite image path for given post
 	UpdateImagePath(postId int, imagePath string) error
 }
@@ -37,6 +40,11 @@ func NewPostDB(db *sql.DB) PostDB {
 
 type postDB struct {
 	db *sql.DB
+}
+
+func (m *postDB) ListPostByUserIdAndFollower(userId int) ([]payloads.PostPayload, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (m *postDB) GetPostById(id int) (payloads.PostPayload, error) {
