@@ -7,6 +7,7 @@ import (
 	"github.com/duynguyen94/go-newfeeds/internal/newsfeed"
 	"github.com/duynguyen94/go-newfeeds/internal/newsfeed/async"
 	"github.com/duynguyen94/go-newfeeds/internal/object_store"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
@@ -49,5 +50,7 @@ func main() {
 	newsfeedHandler := newsfeed.NewHandler(postCache, asyncTask)
 	newsfeed.RouteV1(newsfeedHandler, r)
 
+	// Performance stats
+	pprof.Register(r)
 	r.Run(":8081")
 }
