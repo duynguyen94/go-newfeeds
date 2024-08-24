@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: newsfeed
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql
+#    network_mode: bridge
+    networks:
+      - app-network
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning
+#    network_mode: bridge
+    networks:
+      - app-network
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: 12345678
+    ports:
+      - "9000:9000"
+      - "9001:9001"  # for MinIO console
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+#    network_mode: bridge
+    networks:
+      - app-network
+
+  createbuckets:
+    image: minio/minio
+    depends_on:
+      - minio
+    links:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 admin 12345678;
+      /usr/bin/mc mb myminio/images;
+      /usr/bin/mc policy set public myminio/images;
+      exit 0;
+      "
+    networks:
+      - app-network
+
+  users-go-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: newsfeed-project:0.1
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    command:
+      - "-users-api"
+    environment:
+      NEWSFEED_SERVICE_ADDR: newsfeed-go-app
+      ASYNCQ_REDIS_ADDR: redis
+      MINIO_ENDPOINT: minio
+      MINIO_API_PORT: 9000
+      MINIO_ACCESS_KEY_ID: "admin"
+      MINIO_SECRET_ACCESS_KEY: "12345678"
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: "3306"
+      MYSQL_USER: "mysql"
+      MYSQL_PASS: "mysql"
+      MYSQL_DATABASE: "newsfeed"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: 0
+    links:
+      - mysql
+      - redis
+      - minio
+#      - newsfeed-go-app
+    depends_on:
+      - mysql
+      - redis
+      - createbuckets
+      - newsfeed-go-app
+#    network_mode: bridge
+    networks:
+      - app-network
+
+  newsfeed-go-app:
+    image: newsfeed-project:0.1
+    restart: on-failure
+    ports:
+      - "8081:8081"
+    command:
+      - "-newsfeed-api"
+    environment:
+      NEWSFEED_SERVICE_ADDR: users-go-app
+      ASYNCQ_REDIS_ADDR: redis
+      MINIO_ENDPOINT: minio
+      MINIO_API_PORT: 9000
+      MINIO_ACCESS_KEY_ID: "admin"
+      MINIO_SECRET_ACCESS_KEY: "12345678"
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: "3306"
+      MYSQL_USER: "mysql"
+      MYSQL_PASS: "mysql"
+      MYSQL_DATABASE: "newsfeed"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: 0
+    links:
+      - mysql
+      - redis
+      - minio
+    depends_on:
+      - mysql
+      - redis
+      - createbuckets
+#    network_mode: bridge
+    networks:
+      - app-network
+
+volumes:
+  mysql_data:
+  minio_data:
+
+networks:
+  app-network:
